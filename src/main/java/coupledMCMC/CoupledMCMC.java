@@ -345,15 +345,17 @@ public class CoupledMCMC extends MCMC {
 			}
 		}
 
-		
+
+		runChains();
+	} // run
+
+	protected void runChains() {
 		if (neighbourSwappingInput.get()) {
 			runNeigbours();
-			return;
-		}else {
+		} else {
 			runPrescheduled();
-			return;
 		}
-	} // run
+	}
 	
 	private void runPrescheduled(){
 		// run each thread until it's next swapping time

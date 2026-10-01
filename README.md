@@ -62,6 +62,7 @@ with:
 * `chainLength` — samples per step. All steps run at the same time, one thread each, so the run needs memory and cores for `chains` copies of the model.
 * `burnInPercentage` — discarded from each step's log. Steps start cold rather than from the previous step's state, so this has to cover burn-in.
 * `heatLikelihoodOnly`, `optimise` and `neighbourSwapping` are fixed to `true`, `false` and `true`.
+* `evenOddSwaps` (default `true`) — every `resampleEvery` samples, attempt all even neighbour pairs (0,1),(2,3),… or all odd pairs (1,2),(3,4),…, alternating, instead of one random neighbour pair. States then cross the ladder in O(`chains`) rather than O(`chains`²) rounds (Syed et al. 2021).
 
 Each step's likelihood trace is written to `<rootdir>/step<k>/likelihood.log`, the same layout `PathSampler` uses, so `PathSampleAnalyser` can re-analyse it. At the end the per-step table and the line `marginal L estimate = ...` are printed (stepping stone; thermodynamic integration when `alpha <= 0`). Swaps correlate the steps, so standard errors computed as if the steps were independent are too small. See `examples/coupled_path_sampling.xml`.
 

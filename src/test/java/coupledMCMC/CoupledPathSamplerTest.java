@@ -70,10 +70,12 @@ public class CoupledPathSamplerTest {
     }
 
     @Test
-    void recoversAnalyticMarginalLikelihood(@TempDir Path dir) throws Exception {
+    void recoversAnalyticMarginalLikelihoodWithSinglePairSwaps(@TempDir Path dir) throws Exception {
         Randomizer.setSeed(127);
         CoupledPathSampler sampler = normalNormalSampler(dir, 12, 200_000);
+        sampler.evenOddSwapsInput.setValue(false, sampler);
         runAndCleanUp(sampler, 12);
+        assertEquals(2000, sampler.totalSwaps);
         double expected = -0.5 * Math.log(4 * Math.PI) - 0.25;
         assertEquals(expected, sampler.logMarginalLikelihood, 0.05);
         assertTrue(sampler.successfullSwaps > 0);
@@ -83,6 +85,30 @@ public class CoupledPathSamplerTest {
         for (int k = 0; k < 12; k++) {
             assertTrue(new File(sampler.stepDir(k), CoupledPathSampler.LIKELIHOOD_LOG_FILE).exists());
         }
+    }
+
+    @Test
+    void evenOddRoundsAlternateNeighbourPairs() {
+        assertArrayEquals(new int[][]{{0, 1}, {2, 3}}, EvenOddSwapRunner.neighbourPairs(5, 0));
+        assertArrayEquals(new int[][]{{1, 2}, {3, 4}}, EvenOddSwapRunner.neighbourPairs(5, 1));
+        assertArrayEquals(new int[][]{{0, 1}, {2, 3}}, EvenOddSwapRunner.neighbourPairs(4, 2));
+        assertArrayEquals(new int[][]{{1, 2}}, EvenOddSwapRunner.neighbourPairs(4, 3));
+        assertArrayEquals(new int[][]{}, EvenOddSwapRunner.neighbourPairs(2, 1));
+    }
+
+    @Test
+    void evenOddSwapsAttemptEveryPairEachRound(@TempDir Path dir) throws Exception {
+        Randomizer.setSeed(127);
+        CoupledPathSampler sampler = normalNormalSampler(dir, 12, 200_000);
+        runAndCleanUp(sampler, 12);
+        // 1999 swap rounds (none after the last segment), alternating 6 even and 5 odd pairs
+        assertEquals(1000 * 6 + 999 * 5, sampler.totalSwaps);
+        assertTrue(sampler.successfullSwaps > 0);
+        for (HeatedChain chain : sampler.chains) {
+            assertEquals(sampler.betas[chain.getChainNr()], chain.getBeta());
+        }
+        double expected = -0.5 * Math.log(4 * Math.PI) - 0.25;
+        assertEquals(expected, sampler.logMarginalLikelihood, 0.05);
     }
 
     @Test

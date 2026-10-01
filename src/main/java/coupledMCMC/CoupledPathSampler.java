@@ -26,6 +26,9 @@ public class CoupledPathSampler extends CoupledMCMC {
     public Input<Integer> burnInPercentageInput = new Input<>("burnInPercentage", "burn-in percentage used for analysing the likelihood logs", 50);
     public Input<Integer> likelihoodLogEveryInput = new Input<>("likelihoodLogEvery", "log interval of the per-step likelihood logs (default chainLength/1000)");
 
+    public Input<Boolean> evenOddSwapsInput = new Input<>("evenOddSwaps", "if true, every round attempts all even or all odd "
+            + "neighbour pairs (alternating) instead of a single random neighbour pair", true);
+
     double[] betas;
     double logMarginalLikelihood = Double.NaN;
 
@@ -100,6 +103,15 @@ public class CoupledPathSampler extends CoupledMCMC {
             }
         }
         analyse();
+    }
+
+    @Override
+    protected void runChains() {
+        if (evenOddSwapsInput.get()) {
+            new EvenOddSwapRunner(this).run();
+        } else {
+            super.runChains();
+        }
     }
 
     void analyse() throws IOException {
