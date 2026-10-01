@@ -35,8 +35,17 @@ final class EvenOddSwapRunner {
         long round = 0;
         for (long until = mc3.resampleEvery; ; until += mc3.resampleEvery, round++) {
             long end = Math.min(until, chainLength);
+            // unlike HeatedChainThread, keep failures: a chain that stopped would otherwise still feed the estimate
+            Throwable[] failures = new Throwable[chains.length];
             for (int k = 0; k < chains.length; k++) {
-                threads[k] = mc3.new HeatedChainThread(k, end);
+                final int chainIndex = k;
+                threads[k] = new Thread(() -> {
+                    try {
+                        mc3.finishTimes[chainIndex] = chains[chainIndex].runTillResample(end);
+                    } catch (Throwable t) {
+                        failures[chainIndex] = t;
+                    }
+                });
                 threads[k].start();
             }
             for (Thread thread : threads) {
@@ -44,6 +53,11 @@ final class EvenOddSwapRunner {
                     thread.join();
                 } catch (InterruptedException e) {
                     throw new RuntimeException(e);
+                }
+            }
+            for (int k = 0; k < chains.length; k++) {
+                if (failures[k] != null) {
+                    throw new RuntimeException("Chain " + k + " failed at sample " + end, failures[k]);
                 }
             }
             if (end == chainLength) {

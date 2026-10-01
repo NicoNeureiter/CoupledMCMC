@@ -112,6 +112,16 @@ public class CoupledPathSamplerTest {
     }
 
     @Test
+    void failingChainAbortsRunInsteadOfReportingAnEstimate(@TempDir Path dir) {
+        CoupledPathSampler sampler = normalNormalSampler(dir, 3, 2000);
+        // Logger.log divides by logEvery, so every chain thread throws on its first log call
+        sampler.likelihoodLogEveryInput.setValue(0, sampler);
+        RuntimeException e = assertThrows(RuntimeException.class, () -> runAndCleanUp(sampler, 3));
+        assertInstanceOf(ArithmeticException.class, e.getCause());
+        assertTrue(Double.isNaN(sampler.logMarginalLikelihood));
+    }
+
+    @Test
     void honoursBeastFileNamePrefix(@TempDir Path dir) throws Exception {
         // BEAST's -working / -prefix options set file.name.prefix, which Logger prepends to every log file
         System.setProperty("file.name.prefix", dir + File.separator);
