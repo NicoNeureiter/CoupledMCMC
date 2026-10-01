@@ -123,6 +123,32 @@ public class CoupledPathSamplerTest {
     }
 
     @Test
+    void betaZeroStepSamplesTheFullPrior(@TempDir Path dir) throws Exception {
+        // mu ~ N(0,1); y = 0 observed, y ~ Uniform(mu, 10): the likelihood is -Infinity for mu > 0.
+        // mu is the lower bound rather than the param, so BEAST does not turn the support into a bound on mu.
+        Randomizer.setSeed(127);
+        RealScalarParam<Real> mu = new RealScalarParam<>(-1.0, Real.INSTANCE);
+        Uniform likelihood = new Uniform();
+        likelihood.initByName("param", new RealScalarParam<>(0.0, Real.INSTANCE), "lower", mu,
+                "upper", new RealScalarParam<>(10.0, Real.INSTANCE));
+        // likelihood first: CompoundDistribution stops evaluating at -Infinity, leaving the prior stale
+        CompoundDistribution posterior = new CompoundDistribution();
+        posterior.initByName("distribution", likelihood, "distribution", standardNormalPrior(mu));
+        CoupledPathSampler sampler = sampler(dir, dir.toString(), dir.resolve("trace.log").toString(),
+                mu, posterior, likelihood, 8, 200_000);
+        runAndCleanUp(sampler, 8);
+        // Z = integral over mu <= 0 of phi(mu) / (10 - mu); sampling the prior truncated to mu <= 0 would give 2Z
+        int n = 100_000;
+        double h = 10.0 / n, z = 0;
+        for (int i = 0; i <= n; i++) {
+            double m = -10.0 + i * h;
+            double f = Math.exp(-m * m / 2) / Math.sqrt(2 * Math.PI) / (10 - m);
+            z += (i == 0 || i == n) ? f * h / 2 : f * h;
+        }
+        assertEquals(Math.log(z), sampler.logMarginalLikelihood, 0.1);
+    }
+
+    @Test
     void nanSwapAcceptanceIsAnError() {
         HeatedChain broken = new HeatedChain() {
             @Override

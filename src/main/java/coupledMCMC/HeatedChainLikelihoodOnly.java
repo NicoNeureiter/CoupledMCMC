@@ -2,9 +2,12 @@ package coupledMCMC;
 
 import beast.base.core.BEASTInterface;
 import beast.base.core.Description;
+import beast.base.inference.CompoundDistribution;
 import beast.base.inference.Distribution;
 import beast.base.inference.Operator;
 import beast.base.util.Randomizer;
+
+import java.util.List;
 
 @Description("Like heated chain, but samples log(prior) + beta * log(likelihood) "
 		   + "instead of beta * (log(prior) + log(likelihood))")
@@ -13,6 +16,9 @@ public class HeatedChainLikelihoodOnly extends HeatedChain {
 	
 	Distribution likelihood;
 	double oldLogP = Double.NaN, newLogP;
+	double oldLogPrior = Double.NaN, newLogPrior;
+	// the posterior's components other than the likelihood; null if the likelihood is not one of them
+	List<Distribution> priorParts;
 	
 	@Override
 	public void initAndValidate() {
@@ -26,6 +32,9 @@ public class HeatedChainLikelihoodOnly extends HeatedChain {
 			throw new IllegalArgumentException("Expected the element with id='likelihood' to be a Distribution");
 		}
 		likelihood = (Distribution) o;
+		if (posteriorInput.get() instanceof CompoundDistribution compound && compound.pDistributions.get().contains(likelihood)) {
+			priorParts = compound.pDistributions.get().stream().filter(d -> d != likelihood).toList();
+		}
 	}
 
 	private BEASTInterface findLikelihood(BEASTInterface o) {
@@ -43,13 +52,27 @@ public class HeatedChainLikelihoodOnly extends HeatedChain {
 	
 	@Override
 	protected double getCurrentLogLikelihood() {
-		return oldLogLikelihood - oldLogP + this.beta * oldLogP;
+		return tempered(oldLogPrior, oldLogP, this.beta);
 	}
 	
 		
 	@Override
 	protected double getScaledLogLikelihood(double beta) {
-		return oldLogLikelihood - oldLogP + beta * oldLogP;
+		return tempered(oldLogPrior, oldLogP, beta);
+	}
+
+	// at beta = 0 the target is the prior alone, also where the likelihood is -Infinity (0 * -Infinity would be NaN)
+	private static double tempered(double logPrior, double logLikelihood, double beta) {
+		return beta == 0 ? logPrior : logPrior + beta * logLikelihood;
+	}
+
+	// CompoundDistribution stops evaluating its components at the first -Infinity, so recompute every dirty one
+	private double calculateLogPrior() {
+		double logPrior = 0;
+		for (Distribution part : priorParts) {
+			logPrior += part.isDirtyCalculation() ? part.calculateLogP() : part.getCurrentLogP();
+		}
+		return logPrior;
 	}
 
 	
@@ -63,6 +86,7 @@ public class HeatedChainLikelihoodOnly extends HeatedChain {
     protected Operator propagateState(final long sampleNr) {
 		if (Double.isNaN(oldLogP)) {
 			oldLogP = likelihood.getCurrentLogP();
+			oldLogPrior = oldLogLikelihood - oldLogP;
 		}
 		
         state.store(sampleNr);
@@ -87,14 +111,15 @@ public class HeatedChainLikelihoodOnly extends HeatedChain {
             newLogLikelihood = posterior.calculateLogP();
     		newLogP = likelihood.getCurrentLogP();
 
-            logAlpha = newLogLikelihood - newLogP + newLogP * beta 
-            		- (oldLogLikelihood - oldLogP + oldLogP * beta)
-            		+ logHastingsRatio; 
+            newLogPrior = beta == 0 && priorParts != null ? calculateLogPrior() : newLogLikelihood - newLogP;
+
+            logAlpha = tempered(newLogPrior, newLogP, beta) - tempered(oldLogPrior, oldLogP, beta) + logHastingsRatio;
             
             if (logAlpha >= 0 || Randomizer.nextDouble() < Math.exp(logAlpha)) {
                 // accept
                 oldLogLikelihood = newLogLikelihood;
                 oldLogP = newLogP;
+                oldLogPrior = newLogPrior;
                 state.acceptCalculationNodes();
 
                 if (sampleNr >= 0) {
