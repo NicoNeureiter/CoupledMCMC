@@ -234,7 +234,8 @@ public class CoupledMCMC extends MCMC {
 				// initialize each chain individually
 				chains[i].setResampleEvery(resampleEvery);
 				chains[i].setTemperature(i, getTemperature(i));
-				
+				configureChain(chains[i], i);
+
 				// needed to avoid error of putting the working dir twice
 				String[] splittedFileName = stateFileName.split("/");
 				
@@ -267,7 +268,10 @@ public class CoupledMCMC extends MCMC {
 		
 	}
 	
-	private double getTemperature(int i){
+	protected void configureChain(HeatedChain chain, int chainNr) {
+	}
+
+	protected double getTemperature(int i){
 		if (spacing==Spacing.Geometric) {
 			return i*deltaTemperature;
 		} else {
