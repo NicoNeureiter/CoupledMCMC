@@ -172,6 +172,19 @@ public class CoupledPathSamplerTest {
     }
 
     @Test
+    void chainThreadsReuseOneRandomGeneratorEach(@TempDir Path dir) throws Exception {
+        // Randomizer keeps a generator per thread name and never drops one
+        java.lang.reflect.Field field = Randomizer.class.getDeclaredField("randomMap");
+        field.setAccessible(true);
+        java.util.Map<?, ?> randomMap = (java.util.Map<?, ?>) field.get(null);
+        int before = randomMap.size();
+        runSampler(normalNormalSampler(dir, 3, 20_000));
+        int after = randomMap.size();
+        // 200 rounds with fresh unnamed threads would add 600 generators
+        assertTrue(after - before <= 3, "generators added: " + (after - before));
+    }
+
+    @Test
     void honoursBeastFileNamePrefix(@TempDir Path dir) throws Exception {
         // BEAST's -working / -prefix options set file.name.prefix, which Logger prepends to every log file
         System.setProperty("file.name.prefix", dir + File.separator);

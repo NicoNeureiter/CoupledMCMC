@@ -45,15 +45,15 @@ final class EvenOddSwapRunner {
                     } catch (Throwable t) {
                         failures[chainIndex] = t;
                     }
-                });
+                }, CoupledMCMC.chainThreadName(chainIndex));
                 threads[k].start();
+                if (round == 0) {
+                    // Randomizer registers a thread's generator in an unsynchronised map on first use
+                    join(threads[k]);
+                }
             }
             for (Thread thread : threads) {
-                try {
-                    thread.join();
-                } catch (InterruptedException e) {
-                    throw new RuntimeException(e);
-                }
+                join(thread);
             }
             for (int k = 0; k < chains.length; k++) {
                 if (failures[k] != null) {
@@ -86,6 +86,14 @@ final class EvenOddSwapRunner {
         System.err.println("#Swap attempts = " + mc3.totalSwaps);
         System.err.println("#Successful swaps = " + mc3.successfullSwaps);
         System.err.println("#Successful swaps with cold chain = " + mc3.successfullSwaps0);
+    }
+
+    private static void join(Thread thread) {
+        try {
+            thread.join();
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     /** colder must hold the lower chain number (higher beta) */

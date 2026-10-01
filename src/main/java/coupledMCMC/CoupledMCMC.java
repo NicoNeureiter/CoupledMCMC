@@ -274,6 +274,12 @@ public class CoupledMCMC extends MCMC {
 	protected void configureChain(HeatedChain chain, int chainNr) {
 	}
 
+	// Randomizer keeps one generator per thread name and never removes any, so a chain's
+	// threads must reuse one name rather than get a fresh "Thread-N" every round
+	static String chainThreadName(int chainIndex) {
+		return "coupledMCMC.chain" + chainIndex;
+	}
+
 	// a chain never holds a state with NaN tempered log probability, so NaN means a broken likelihood or posterior calculation
 	static void checkSwapAcceptance(double logAlpha, HeatedChain chain1, HeatedChain chain2) {
 		if (Double.isNaN(logAlpha)) {
@@ -305,6 +311,7 @@ public class CoupledMCMC extends MCMC {
 		long runUntil;
 
 		HeatedChainThread(int chainNr, long runUntil) {
+			super(chainThreadName(chainNr));
 			this.chainNr = chainNr;
 			this.runUntil = runUntil;
 		}		
