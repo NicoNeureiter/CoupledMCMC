@@ -1,9 +1,11 @@
-<?xml version="1.0" encoding="UTF-8" standalone="no"?><beast beautitemplate='Standard' beautistatus='' namespace="beast.pkgmgmt:beast.base.core:beast.base.inference:beast.base.evolution.alignment:beast.base.evolution.tree.coalescent:beast.pkgmgmt:beast.base.core:beast.base.inference.util:beast.evolution.nuc:beast.base.evolution.operator:beast.base.inference.operator:beast.base.evolution.sitemodel:beast.base.evolution.substitutionmodel:beast.base.evolution.likelihood" required="" version="2.4">
+<?xml version='1.0' encoding='UTF-8'?>
+<beast version="2.8"
+       namespace="beast.core:beast.core.util:beast.evolution.alignment:beast.evolution.nuc:beast.evolution.operators:beast.evolution.sitemodel:beast.evolution.substitutionmodel:beast.evolution.tree.coalescent:beast.base.core:beast.base.evolution.alignment:beast.base.evolution.likelihood:beast.base.evolution.operator:beast.base.evolution.sitemodel:beast.base.evolution.substitutionmodel:beast.base.evolution.tree:beast.base.evolution.tree.coalescent:beast.base.inference:beast.base.inference.operator:beast.base.inference.util:beast.pkgmgmt"
+       beautitemplate="Standard"
+       beautistatus=""
+       required="">
 
-
-    <data
-id="hcv"
-name="alignment">
+    <data id="hcv" name="alignment">
                     <sequence id="seq_AF271825i_0800" taxon="AF271825i_0800" totalcount="4" value="CTCTTGGCACTTCTTTCGTGCTTGACTGTCCCCGCTTCGGCCATCAACTACCGCAATGCTTCGGGCGTCTACCACGTCACCAACGACTGCCCGAATTCAAGCATAGTGTTTGAGGCCGACCATCACATCTTACACCTTCCAGGTTGCGTGCCCTGCGTGAGAGAGGGGAATCAGTCTCGTTGCTGGGTGGCTCTTACTCCTACTGTCGCAGCGCCACACATCGGCGCGCCGCTTGAATCCTTGCGGAGTCATGTGGATCTGATGGTGGGGGCTGCCACTGCTTGTTCGGCCCTTTACATCGGGGACTTGTGTGGCGGCTTGTTCTTGGTCGGTCAGATGTTCTCTTTCCGACCACGACGCCACTGGACTACCCAGGACTGCAATTGTTCTATCTATACAGGGCACATCACT"/>
                     <sequence id="seq_AF271826i_0873" taxon="AF271826i_0873" totalcount="4" value="CTCTTGGCACTTCTCTCGTGCCTGACTGTCCCCGCTTCGGCCATTAACTACCACAATGTTTCGGGCATCTACCATGTCACCAATGACTGCCCAAATTCAAGCATAGTGTATGAGGCCGACCATCACATCCTACACCTCCCAGGTTGCGTGCCCTGCGTGAGGACGGGGAACCAGTCGCACTGCTGGGTGGCCCTTACTCCTACCGTCGCAGCGCCATACATCGGCGCACCGCTTGAGTCCCTGCGGAGTCATGTGGATCTGATGGTAGGGGCTGCCACTGTTTGTTCAGCCCTTTATATCGGGGATTTGTGTGGCGGCTTGTTTTTGGTTGGTCAGATGTTCTCTTTCCGACCACGGCGCCACTGGACCACCCAGGATTGCAATTGTTCCATCTATACGGGGCACATTACT"/>
                     <sequence id="seq_AF271827i_0883" taxon="AF271827i_0883" totalcount="4" value="CTCTTGGCACTTCTCTCGTGCCTGACTGTCCCCACCTCGGCCATTAACTATCGCAATGCTTCGGGCGTTTACCATGTCACCAATGACTGCCCGAATTCAAGCATAGTGTATGAGGCCGACCATCACATCTTGCACCTTCCAGGTTGCGTGCCCTGCGTGAGAGAGGGGAATCAGTCACGCTGCTGGGTGGCCCTTACCCCCACCGTCGCAGCGCCATACATCGGCGCGCCACTTCAATCTCTACGGAGTCATGTGGATTTGATGGTGGGGGCCGCCACTGCTTGTTCAGCCCTTTACATCGGGGACTTGTGTGGCGGCTTGTTCTTGGTCGGTCAGATGTTCTCTTTCCGGCCACGGCGCCACTGGACTACCCAGGACTGCAATTGTTCCATCTATACAGGGCACATCATG"/>
@@ -69,25 +71,6 @@ name="alignment">
                     <sequence id="seq_AF271887i_3405" taxon="AF271887i_3405" totalcount="4" value="CTCTTGGCACTTCTCTCGTGCCTGACCGTCCCTGCCTCGGCCATACACTATCGCAATGCTTCGGATGTCTACCACGTCACCAATGACTGTCCGAATTCCAGCATAGTCTATGAGTCTGAAAACCACATCCTACACCTTCCGGGGTGTGTGCCCTGTGTGAGGATTGGGAACGTGTCACAATGCTGGGTGGCCCTAACCCCCACCGTGGCGGCGCCGTACCTCAATGCTCCGGTCGACTCCCTACGGAGGCACGTGGACCTGATGGTTGGCGCCGCTACTATGTGCTCAGCATTTTATGTTGGGGACCTGTGCGGGGCTGTGTTCCTGGCGGGCCAGTTGGTGACGTTTCGACCGCGACGCCACTGGACCACTCAAGATTGTAACTGTTCCATCTATGCCGGGCACATCACA"/>
                 </data>
 
-
-
-
-
-
-
-
-
-<map name="Uniform" >beast.base.inference.distribution.Uniform</map>
-<map name="Exponential" >beast.base.inference.distribution.Exponential</map>
-<map name="LogNormal" >beast.base.inference.distribution.LogNormalDistributionModel</map>
-<map name="Normal" >beast.base.inference.distribution.Normal</map>
-<map name="Beta" >beast.base.inference.distribution.Beta</map>
-<map name="Gamma" >beast.base.inference.distribution.Gamma</map>
-<map name="LaplaceDistribution" >beast.base.inference.distribution.LaplaceDistribution</map>
-<map name="prior" >beast.base.inference.distribution.Prior</map>
-<map name="InverseGamma" >beast.base.inference.distribution.InverseGamma</map>
-<map name="OneOnX" >beast.base.inference.distribution.OneOnX</map>
-
 <run id="mcmc" spec="coupledMCMC.CoupledPathSampler" chainLength="1000000" storeEvery="10000" chains="16" alpha="0.3" rootdir="cps" burnInPercentage="50" resampleEvery="100">
     <state id="state" storeEvery="5000">
         <tree id="Tree.t:hcv" name="stateNode">
@@ -95,103 +78,89 @@ name="alignment">
                 <alignment idref="hcv"/>
             </taxonset>
         </tree>
-        <parameter id="gammaShape.s:hcv" name="stateNode">1.0</parameter>
-        <parameter id="rateAC.s:hcv" lower="0.0" name="stateNode">1.0</parameter>
-        <parameter id="rateAG.s:hcv" lower="0.0" name="stateNode">1.0</parameter>
-        <parameter id="rateAT.s:hcv" lower="0.0" name="stateNode">1.0</parameter>
-        <parameter id="rateCG.s:hcv" lower="0.0" name="stateNode">1.0</parameter>
-        <parameter id="rateGT.s:hcv" lower="0.0" name="stateNode">1.0</parameter>
-        <parameter id="bPopSizes.t:hcv" dimension="4" lower="0.0" name="stateNode" upper="380000.0">380.0</parameter>
-        <stateNode id="bGroupSizes.t:hcv" spec="parameter.IntegerParameter" dimension="4">1</stateNode>
-        <parameter id="freqParameter.s:hcv" dimension="4" lower="0.0" name="stateNode" upper="1.0">0.25</parameter>
+        <parameter id="gammaShape.s:hcv" name="stateNode" value="1.0" spec="beast.base.spec.inference.parameter.RealScalarParam" domain="PositiveReal"/>
+        <parameter id="rateAC.s:hcv" name="stateNode" value="1.0" spec="beast.base.spec.inference.parameter.RealScalarParam" domain="PositiveReal"/>
+        <parameter id="rateAG.s:hcv" name="stateNode" value="1.0" spec="beast.base.spec.inference.parameter.RealScalarParam" domain="PositiveReal"/>
+        <parameter id="rateAT.s:hcv" name="stateNode" value="1.0" spec="beast.base.spec.inference.parameter.RealScalarParam" domain="PositiveReal"/>
+        <parameter id="rateCG.s:hcv" name="stateNode" value="1.0" spec="beast.base.spec.inference.parameter.RealScalarParam" domain="PositiveReal"/>
+        <parameter id="rateGT.s:hcv" name="stateNode" value="1.0" spec="beast.base.spec.inference.parameter.RealScalarParam" domain="PositiveReal"/>
+        <parameter id="bPopSizes.t:hcv" dimension="4" name="stateNode" value="380.0" spec="beast.base.spec.inference.parameter.RealVectorParam" domain="PositiveReal"/>
+        <stateNode id="bGroupSizes.t:hcv" dimension="4" value="1" spec="beast.base.spec.inference.parameter.IntSimplexParam" domain="PositiveInt"/>
+        <parameter id="freqParameter.s:hcv" dimension="4" name="stateNode" value="0.25" spec="beast.base.spec.inference.parameter.SimplexParam"/>
     </state>
 
-    <init id="RandomTree.t:hcv" spec="beast.base.evolution.tree.coalescent.RandomTree" estimate="false" initial="@Tree.t:hcv" taxa="@hcv">
-        <populationModel id="ConstantPopulation0.t:hcv" spec="ConstantPopulation">
-            <parameter id="randomPopSize.t:hcv" name="popSize">1.0</parameter>
+    <init id="RandomTree.t:hcv" spec="beast.base.spec.evolution.tree.coalescent.RandomTree" estimate="false" initial="@Tree.t:hcv" taxa="@hcv">
+        <populationModel id="ConstantPopulation0.t:hcv" spec="beast.base.spec.evolution.tree.coalescent.ConstantPopulation">
+            <parameter id="randomPopSize.t:hcv" name="popSize" value="1.0" spec="beast.base.spec.inference.parameter.RealScalarParam" domain="PositiveReal"/>
         </populationModel>
     </init>
 
     <distribution id="posterior" spec="beast.base.inference.CompoundDistribution">
         <distribution id="prior" spec="beast.base.inference.CompoundDistribution">
-            <distribution id="BayesianSkyline.t:hcv" spec="BayesianSkyline" groupSizes="@bGroupSizes.t:hcv" popSizes="@bPopSizes.t:hcv">
+            <distribution id="BayesianSkyline.t:hcv" spec="beast.base.spec.evolution.tree.coalescent.BayesianSkyline" groupSizes="@bGroupSizes.t:hcv" popSizes="@bPopSizes.t:hcv">
                 <treeIntervals id="BSPTreeIntervals.t:hcv" spec="beast.base.evolution.tree.TreeIntervals" tree="@Tree.t:hcv"/>
             </distribution>
-            <prior id="PopSizePrior.t:hcv" name="distribution" x="@bPopSizes.t:hcv">
-                <LogNormal id="LogNormal.popSizes" name="distr" M="6.0" S="2.0"/>
-            </prior>
-            <prior id="GammaShapePrior.s:hcv" name="distribution" x="@gammaShape.s:hcv">
-                <Exponential id="Exponential.0" name="distr">
-                    <parameter id="RealParameter.0" lower="0.0" name="mean" upper="0.0">1.0</parameter>
-                </Exponential>
-            </prior>
-            <prior id="RateACPrior.s:hcv" name="distribution" x="@rateAC.s:hcv">
-                <Gamma id="Gamma.0" name="distr" mode="ShapeScale">
-                    <parameter id="RealParameter.01" estimate="false" name="alpha">2.0</parameter>
-                    <parameter id="RealParameter.02" estimate="false" name="beta">0.5</parameter>
-                </Gamma>
-            </prior>
-            <prior id="RateAGPrior.s:hcv" name="distribution" x="@rateAG.s:hcv">
-                <Gamma id="Gamma.01" name="distr" mode="ShapeScale">
-                    <parameter id="RealParameter.03" estimate="false" name="alpha">2.0</parameter>
-                    <parameter id="RealParameter.04" estimate="false" name="beta">0.5</parameter>
-                </Gamma>
-            </prior>
-            <prior id="RateATPrior.s:hcv" name="distribution" x="@rateAT.s:hcv">
-                <Gamma id="Gamma.02" name="distr" mode="ShapeScale">
-                    <parameter id="RealParameter.05" estimate="false" name="alpha">2.0</parameter>
-                    <parameter id="RealParameter.06" estimate="false" name="beta">0.5</parameter>
-                </Gamma>
-            </prior>
-            <prior id="RateCGPrior.s:hcv" name="distribution" x="@rateCG.s:hcv">
-                <Gamma id="Gamma.03" name="distr" mode="ShapeScale">
-                    <parameter id="RealParameter.07" estimate="false" name="alpha">2.0</parameter>
-                    <parameter id="RealParameter.08" estimate="false" name="beta">0.5</parameter>
-                </Gamma>
-            </prior>
-            <prior id="RateGTPrior.s:hcv" name="distribution" x="@rateGT.s:hcv">
-                <Gamma id="Gamma.04" name="distr" mode="ShapeScale">
-                    <parameter id="RealParameter.09" estimate="false" name="alpha">2.0</parameter>
-                    <parameter id="RealParameter.010" estimate="false" name="beta">0.5</parameter>
-                </Gamma>
-            </prior>
+            <distribution id="PopSizePrior.t:hcv" spec="beast.base.spec.inference.distribution.IID" param="@bPopSizes.t:hcv"><LogNormal spec="beast.base.spec.inference.distribution.LogNormal" id="LogNormal.popSizes" name="distr" M="6.0" S="2.0"/></distribution>
+            <distribution id="Exponential.0" spec="beast.base.spec.inference.distribution.Exponential" param="@gammaShape.s:hcv">
+                    <parameter id="RealParameter.0" name="mean" value="1.0" spec="beast.base.spec.inference.parameter.RealScalarParam" domain="PositiveReal"/>
+                </distribution>
+            <distribution id="Gamma.0" spec="beast.base.spec.inference.distribution.Gamma" param="@rateAC.s:hcv">
+                    <parameter id="RealParameter.01" estimate="false" name="alpha" value="2.0" spec="beast.base.spec.inference.parameter.RealScalarParam" domain="PositiveReal"/>
+                    <parameter id="RealParameter.02" estimate="false" name="theta" value="0.5" spec="beast.base.spec.inference.parameter.RealScalarParam" domain="PositiveReal"/>
+                </distribution>
+            <distribution id="Gamma.01" spec="beast.base.spec.inference.distribution.Gamma" param="@rateAG.s:hcv">
+                    <parameter id="RealParameter.03" estimate="false" name="alpha" value="2.0" spec="beast.base.spec.inference.parameter.RealScalarParam" domain="PositiveReal"/>
+                    <parameter id="RealParameter.04" estimate="false" name="theta" value="0.5" spec="beast.base.spec.inference.parameter.RealScalarParam" domain="PositiveReal"/>
+                </distribution>
+            <distribution id="Gamma.02" spec="beast.base.spec.inference.distribution.Gamma" param="@rateAT.s:hcv">
+                    <parameter id="RealParameter.05" estimate="false" name="alpha" value="2.0" spec="beast.base.spec.inference.parameter.RealScalarParam" domain="PositiveReal"/>
+                    <parameter id="RealParameter.06" estimate="false" name="theta" value="0.5" spec="beast.base.spec.inference.parameter.RealScalarParam" domain="PositiveReal"/>
+                </distribution>
+            <distribution id="Gamma.03" spec="beast.base.spec.inference.distribution.Gamma" param="@rateCG.s:hcv">
+                    <parameter id="RealParameter.07" estimate="false" name="alpha" value="2.0" spec="beast.base.spec.inference.parameter.RealScalarParam" domain="PositiveReal"/>
+                    <parameter id="RealParameter.08" estimate="false" name="theta" value="0.5" spec="beast.base.spec.inference.parameter.RealScalarParam" domain="PositiveReal"/>
+                </distribution>
+            <distribution id="Gamma.04" spec="beast.base.spec.inference.distribution.Gamma" param="@rateGT.s:hcv">
+                    <parameter id="RealParameter.09" estimate="false" name="alpha" value="2.0" spec="beast.base.spec.inference.parameter.RealScalarParam" domain="PositiveReal"/>
+                    <parameter id="RealParameter.010" estimate="false" name="theta" value="0.5" spec="beast.base.spec.inference.parameter.RealScalarParam" domain="PositiveReal"/>
+                </distribution>
         </distribution>
         <distribution id="likelihood" spec="beast.base.inference.CompoundDistribution" useThreads="true">
-            <distribution id="treeLikelihood.hcv" spec="ThreadedTreeLikelihood" data="@hcv" tree="@Tree.t:hcv">
-                <siteModel id="SiteModel.s:hcv" spec="SiteModel" gammaCategoryCount="4" shape="@gammaShape.s:hcv">
-                    <parameter id="mutationRate.s:hcv" estimate="false" name="mutationRate">1.0</parameter>
-                    <parameter id="proportionInvariant.s:hcv" estimate="false" lower="0.0" name="proportionInvariant" upper="1.0">0.0</parameter>
-                    <substModel id="gtr.s:hcv" spec="GTR" rateAC="@rateAC.s:hcv" rateAG="@rateAG.s:hcv" rateAT="@rateAT.s:hcv" rateCG="@rateCG.s:hcv" rateGT="@rateGT.s:hcv">
-                        <parameter id="rateCT.s:hcv" estimate="false" lower="0.0" name="rateCT">1.0</parameter>
-                        <frequencies id="estimatedFreqs.s:hcv" spec="Frequencies" frequencies="@freqParameter.s:hcv"/>
+            <distribution id="treeLikelihood.hcv" spec="beast.base.spec.evolution.likelihood.ThreadedTreeLikelihood" data="@hcv" tree="@Tree.t:hcv">
+                <siteModel id="SiteModel.s:hcv" spec="beast.base.spec.evolution.sitemodel.SiteModel" gammaCategoryCount="4" shape="@gammaShape.s:hcv">
+                    <parameter id="mutationRate.s:hcv" estimate="false" name="mutationRate" value="1.0" spec="beast.base.spec.inference.parameter.RealScalarParam" domain="PositiveReal"/>
+                    <parameter id="proportionInvariant.s:hcv" estimate="false" name="proportionInvariant" value="0.0" spec="beast.base.spec.inference.parameter.RealScalarParam" domain="UnitInterval"/>
+                    <substModel id="gtr.s:hcv" spec="beast.base.spec.evolution.substitutionmodel.GTR" rateAC="@rateAC.s:hcv" rateAG="@rateAG.s:hcv" rateAT="@rateAT.s:hcv" rateCG="@rateCG.s:hcv" rateGT="@rateGT.s:hcv">
+                        <parameter id="rateCT.s:hcv" estimate="false" name="rateCT" value="1.0" spec="beast.base.spec.inference.parameter.RealScalarParam" domain="PositiveReal"/>
+                        <frequencies id="estimatedFreqs.s:hcv" spec="beast.base.spec.evolution.substitutionmodel.Frequencies" frequencies="@freqParameter.s:hcv"/>
                     </substModel>
                 </siteModel>
-                <branchRateModel id="StrictClock.c:hcv" spec="beast.base.evolution.branchratemodel.StrictClockModel">
-                    <parameter id="clockRate.c:hcv" estimate="false" name="clock.rate">7.9E-4</parameter>
+                <branchRateModel id="StrictClock.c:hcv" spec="beast.base.spec.evolution.branchratemodel.StrictClockModel">
+                    <parameter id="clockRate.c:hcv" estimate="false" name="clock.rate" value="7.9E-4" spec="beast.base.spec.inference.parameter.RealScalarParam" domain="PositiveReal"/>
                 </branchRateModel>
             </distribution>
         </distribution>
     </distribution>
 
-    <operator id="gammaShapeScaler.s:hcv" spec="ScaleOperator" parameter="@gammaShape.s:hcv" scaleFactor="0.5" weight="0.1"/>
+    <operator id="gammaShapeScaler.s:hcv" parameter="@gammaShape.s:hcv" scaleFactor="0.5" weight="0.1" spec="beast.base.spec.inference.operator.ScaleOperator"/>
 
-    <operator id="RateACScaler.s:hcv" spec="ScaleOperator" parameter="@rateAC.s:hcv" scaleFactor="0.5" weight="0.1"/>
+    <operator id="RateACScaler.s:hcv" parameter="@rateAC.s:hcv" scaleFactor="0.5" weight="0.1" spec="beast.base.spec.inference.operator.ScaleOperator"/>
 
-    <operator id="RateAGScaler.s:hcv" spec="ScaleOperator" parameter="@rateAG.s:hcv" scaleFactor="0.5" weight="0.1"/>
+    <operator id="RateAGScaler.s:hcv" parameter="@rateAG.s:hcv" scaleFactor="0.5" weight="0.1" spec="beast.base.spec.inference.operator.ScaleOperator"/>
 
-    <operator id="RateATScaler.s:hcv" spec="ScaleOperator" parameter="@rateAT.s:hcv" scaleFactor="0.5" weight="0.1"/>
+    <operator id="RateATScaler.s:hcv" parameter="@rateAT.s:hcv" scaleFactor="0.5" weight="0.1" spec="beast.base.spec.inference.operator.ScaleOperator"/>
 
-    <operator id="RateCGScaler.s:hcv" spec="ScaleOperator" parameter="@rateCG.s:hcv" scaleFactor="0.5" weight="0.1"/>
+    <operator id="RateCGScaler.s:hcv" parameter="@rateCG.s:hcv" scaleFactor="0.5" weight="0.1" spec="beast.base.spec.inference.operator.ScaleOperator"/>
 
-    <operator id="RateGTScaler.s:hcv" spec="ScaleOperator" parameter="@rateGT.s:hcv" scaleFactor="0.5" weight="0.1"/>
+    <operator id="RateGTScaler.s:hcv" parameter="@rateGT.s:hcv" scaleFactor="0.5" weight="0.1" spec="beast.base.spec.inference.operator.ScaleOperator"/>
 
-    <operator id="BayesianSkylineTreeScaler.t:hcv" spec="ScaleOperator" scaleFactor="0.5" tree="@Tree.t:hcv" weight="3.0"/>
+    <operator id="BayesianSkylineTreeScaler.t:hcv" scaleFactor="0.5" tree="@Tree.t:hcv" weight="3.0" spec="beast.base.spec.evolution.operator.ScaleTreeOperator"/>
 
-    <operator id="BayesianSkylineTreeRootScaler.t:hcv" spec="ScaleOperator" rootOnly="true" scaleFactor="0.5" tree="@Tree.t:hcv" weight="3.0"/>
+    <operator id="BayesianSkylineTreeRootScaler.t:hcv" rootOnly="true" scaleFactor="0.5" tree="@Tree.t:hcv" weight="3.0" spec="beast.base.spec.evolution.operator.ScaleTreeOperator"/>
 
-    <operator id="BayesianSkylineUniformOperator.t:hcv" spec="Uniform" tree="@Tree.t:hcv" weight="30.0"/>
+    <operator id="BayesianSkylineUniformOperator.t:hcv" tree="@Tree.t:hcv" weight="30.0" spec="beast.base.evolution.operator.Uniform"/>
 
-    <operator id="BayesianSkylineSubtreeSlide.t:hcv" spec="SubtreeSlide" tree="@Tree.t:hcv" weight="15.0"/>
+    <operator id="BayesianSkylineSubtreeSlide.t:hcv" spec="beast.base.evolution.operator.kernel.BactrianSubtreeSlide" tree="@Tree.t:hcv" weight="15.0"/>
 
     <operator id="BayesianSkylineNarrow.t:hcv" spec="Exchange" tree="@Tree.t:hcv" weight="15.0"/>
 
@@ -199,13 +168,13 @@ name="alignment">
 
     <operator id="BayesianSkylineWilsonBalding.t:hcv" spec="WilsonBalding" tree="@Tree.t:hcv" weight="3.0"/>
 
-    <operator id="popSizesScaler.t:hcv" spec="ScaleOperator" parameter="@bPopSizes.t:hcv" scaleFactor="0.75" weight="15.0"/>
+    <operator id="popSizesScaler.t:hcv" parameter="@bPopSizes.t:hcv" scaleFactor="0.75" weight="15.0" spec="beast.base.spec.inference.operator.ScaleOperator"/>
 
-    <operator id="groupSizesDelta.t:hcv" spec="DeltaExchangeOperator" integer="true" weight="6.0">
-        <intparameter idref="bGroupSizes.t:hcv"/>
+    <operator id="groupSizesDelta.t:hcv" spec="beast.base.spec.inference.operator.DeltaExchangeOperator" weight="6.0">
+        <ivparameter idref="bGroupSizes.t:hcv"/>
     </operator>
 
-    <operator id="FrequenciesExchanger.s:hcv" spec="DeltaExchangeOperator" delta="0.01" weight="0.1">
+    <operator id="FrequenciesExchanger.s:hcv" spec="beast.base.spec.inference.operator.DeltaExchangeOperator" delta="0.01" weight="0.1">
         <parameter idref="freqParameter.s:hcv"/>
     </operator>
 
@@ -230,13 +199,13 @@ name="alignment">
 
     <logger id="screenlog" logEvery="1000">
         <log idref="posterior"/>
-        <log id="ESS.0" spec="util.ESS" arg="@posterior"/>
+        <log id="ESS.0" spec="beast.base.spec.inference.util.ESS" arg="@posterior"/>
         <log idref="likelihood"/>
         <log idref="prior"/>
     </logger>
 
     <logger id="treelog.t:hcv" fileName="$(filebase).trees" logEvery="1000" mode="tree">
-        <log id="TreeWithMetaDataLogger.t:hcv" spec="beast.base.evolution.TreeWithMetaDataLogger" tree="@Tree.t:hcv"/>
+        <log id="TreeWithMetaDataLogger.t:hcv" spec="beast.base.spec.evolution.TreeWithMetaDataLogger" tree="@Tree.t:hcv"/>
     </logger>
 
 </run>
