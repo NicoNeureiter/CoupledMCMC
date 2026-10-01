@@ -2,6 +2,8 @@ package coupledMCMC;
 
 import beast.base.core.Description;
 import beast.base.core.Input;
+import beast.base.core.Log;
+import beast.base.spec.inference.util.ESS;
 import org.apache.commons.statistics.distribution.BetaDistribution;
 
 import java.io.File;
@@ -25,6 +27,7 @@ public class CoupledPathSampler extends CoupledMCMC {
     public Input<Integer> likelihoodLogEveryInput = new Input<>("likelihoodLogEvery", "log interval of the per-step likelihood logs (default chainLength/1000)");
 
     double[] betas;
+    double logMarginalLikelihood = Double.NaN;
 
     public CoupledPathSampler() {
         heatLikelihoodOnlyInput.setValue(true, this);
@@ -65,6 +68,68 @@ public class CoupledPathSampler extends CoupledMCMC {
     @Override
     protected double getTemperature(int i) {
         return 1.0 / betas[i] - 1.0;
+    }
+
+    @Override
+    protected void configureChain(HeatedChain chain, int chainNr) {
+        // added after CoupledMCMC suppresses heated-chain loggers, so every temperature slot is logged;
+        // swapLoggers swaps it by ID, so each file follows its beta rather than its replica
+        File dir = new File(stepDir(chainNr));
+        if (!dir.exists() && !dir.mkdirs()) {
+            throw new RuntimeException("Could not create directory " + dir);
+        }
+        int logEvery = likelihoodLogEveryInput.get() != null
+                ? likelihoodLogEveryInput.get()
+                : (int) Math.max(1, chainLengthInput.get() / 1000);
+        CoupledLogger logger = new CoupledLogger();
+        logger.initByName("fileName", new File(dir, LIKELIHOOD_LOG_FILE).getPath(),
+                "log", ((HeatedChainLikelihoodOnly) chain).likelihood, "logEvery", logEvery);
+        logger.setID(LIKELIHOOD_LOGGER_ID);
+        chain.coupledLoggersInput.get().add(logger);
+    }
+
+    @Override
+    public void run() throws IOException {
+        super.run();
+        // Logger writes through a buffered PrintStream and CoupledMCMC never closes its loggers
+        for (HeatedChain chain : chains) {
+            for (CoupledLogger logger : chain.coupledLoggersInput.get()) {
+                if (LIKELIHOOD_LOGGER_ID.equals(logger.getID())) {
+                    logger.close();
+                }
+            }
+        }
+        analyse();
+    }
+
+    void analyse() throws IOException {
+        int n = betas.length;
+        double[] betasAscending = new double[n];
+        double[][] logLs = new double[n][];
+        double[] means = new double[n];
+        double[] ess = new double[n];
+        for (int k = 0; k < n; k++) {
+            int i = n - 1 - k;
+            List<Double> trace = readTrace(new File(stepDir(k), LIKELIHOOD_LOG_FILE), LIKELIHOOD_ID, burnInPercentageInput.get());
+            betasAscending[i] = betas[k];
+            logLs[i] = trace.stream().mapToDouble(Double::doubleValue).toArray();
+            means[i] = Arrays.stream(logLs[i]).average().orElse(Double.NaN);
+            ess[i] = ESS.calcESS(trace);
+        }
+        double[] contrib = steppingStoneContributions(betasAscending, logLs);
+        double ss = Arrays.stream(contrib).sum();
+        double ti = thermodynamicIntegration(betasAscending, means);
+        logMarginalLikelihood = alphaInput.get() > 0 ? ss : ti;
+
+        Log.info.println("\nStep  beta          mean logL     contribution  ESS");
+        for (int k = 0; k < n; k++) {
+            int i = n - 1 - k;
+            Log.info.println(String.format("%-5d %-13.6g %-13.6g %-13s %.1f", k, betas[k], means[i],
+                    i < n - 1 ? String.format("%.6g", contrib[i]) : "-", ess[i]));
+        }
+        Log.info.println("stepping stone estimate = " + ss);
+        Log.info.println("thermodynamic integration estimate = " + ti);
+        Log.info.println("marginal L estimate = " + logMarginalLikelihood);
     }
 
     String stepDir(int k) {

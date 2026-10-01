@@ -1,5 +1,14 @@
 package coupledMCMC;
 
+import beast.base.inference.CompoundDistribution;
+import beast.base.inference.Logger;
+import beast.base.inference.State;
+import beast.base.spec.domain.PositiveReal;
+import beast.base.spec.domain.Real;
+import beast.base.spec.inference.distribution.Normal;
+import beast.base.spec.inference.operator.RealRandomWalkOperator;
+import beast.base.spec.inference.parameter.RealScalarParam;
+import beast.base.util.Randomizer;
 import org.apache.commons.statistics.distribution.BetaDistribution;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -12,6 +21,80 @@ import java.util.List;
 import static org.junit.jupiter.api.Assertions.*;
 
 public class CoupledPathSamplerTest {
+
+    // y = 1 observed, y | mu ~ N(mu, 1), mu ~ N(0, 1)  =>  y ~ N(0, 2)
+    static CoupledPathSampler normalNormalSampler(Path dir, int chains, long chainLength) {
+        RealScalarParam<Real> mu = new RealScalarParam<>(0.0, Real.INSTANCE);
+        mu.setID("mu");
+        Normal prior = new Normal();
+        prior.initByName("param", mu, "mean", new RealScalarParam<>(0.0, Real.INSTANCE),
+                "sigma", new RealScalarParam<>(1.0, PositiveReal.INSTANCE));
+        prior.setID("prior");
+        Normal likelihood = new Normal();
+        likelihood.initByName("param", new RealScalarParam<>(1.0, Real.INSTANCE), "mean", mu,
+                "sigma", new RealScalarParam<>(1.0, PositiveReal.INSTANCE));
+        likelihood.setID("likelihood");
+        CompoundDistribution posterior = new CompoundDistribution();
+        posterior.initByName("distribution", prior, "distribution", likelihood);
+        posterior.setID("posterior");
+        State state = new State();
+        state.initByName("stateNode", mu);
+        RealRandomWalkOperator op = new RealRandomWalkOperator();
+        op.initByName("scalar", mu, "windowSize", 1.0, "weight", 1.0);
+        Logger trace = new Logger();
+        trace.initByName("fileName", dir.resolve("trace.log").toString(), "log", mu, "logEvery", 1000);
+        trace.setID("tracelog");
+
+        CoupledPathSampler sampler = new CoupledPathSampler();
+        sampler.initByName("chains", chains, "chainLength", chainLength, "resampleEvery", 100,
+                "rootdir", dir.toString(), "alpha", 0.3, "burnInPercentage", 10,
+                "distribution", posterior, "state", state, "operator", op, "logger", trace);
+        sampler.setStateFile(dir.resolve("cps.state").toString(), false);
+        return sampler;
+    }
+
+    static void runAndCleanUp(CoupledPathSampler sampler, int chains) throws Exception {
+        Logger.FILE_MODE = Logger.LogFileMode.overwrite;
+        try {
+            sampler.run();
+        } finally {
+            // CoupledMCMC writes per-chain state files to the working directory, by file name only
+            for (int k = 0; k < chains; k++) {
+                Files.deleteIfExists(Path.of("cps." + k + "state"));
+            }
+        }
+    }
+
+    @Test
+    void recoversAnalyticMarginalLikelihood(@TempDir Path dir) throws Exception {
+        Randomizer.setSeed(127);
+        CoupledPathSampler sampler = normalNormalSampler(dir, 12, 200_000);
+        runAndCleanUp(sampler, 12);
+        double expected = -0.5 * Math.log(4 * Math.PI) - 0.25;
+        assertEquals(expected, sampler.logMarginalLikelihood, 0.05);
+        assertTrue(sampler.successfullSwaps > 0);
+        for (HeatedChain chain : sampler.chains) {
+            assertInstanceOf(HeatedChainLikelihoodOnly.class, chain);
+        }
+        for (int k = 0; k < 12; k++) {
+            assertTrue(new File(sampler.stepDir(k), CoupledPathSampler.LIKELIHOOD_LOG_FILE).exists());
+        }
+    }
+
+    @Test
+    void rejectsSettingsThatBreakPathSampling(@TempDir Path dir) {
+        // initByName wraps the IllegalArgumentException
+        assertThrows(RuntimeException.class, () -> normalNormalSampler(dir, 1, 1000));
+        CoupledPathSampler s = new CoupledPathSampler();
+        s.optimiseInput.setValue(true, s);
+        assertThrows(IllegalArgumentException.class, s::initAndValidate);
+        CoupledPathSampler s2 = new CoupledPathSampler();
+        s2.heatLikelihoodOnlyInput.setValue(false, s2);
+        assertThrows(IllegalArgumentException.class, s2::initAndValidate);
+        CoupledPathSampler s3 = new CoupledPathSampler();
+        s3.burnInPercentageInput.setValue(100, s3);
+        assertThrows(IllegalArgumentException.class, s3::initAndValidate);
+    }
 
     @Test
     void betaScheduleMatchesPathSampler() {
