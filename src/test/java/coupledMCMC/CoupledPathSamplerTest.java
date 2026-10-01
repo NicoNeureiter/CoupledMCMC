@@ -148,6 +148,26 @@ public class CoupledPathSamplerTest {
     }
 
     @Test
+    void swappingOperatorTuningKeepsAcceptAndRejectCountsApart() {
+        RealScalarParam<Real> x = new RealScalarParam<>(0.0, Real.INSTANCE);
+        RealRandomWalkOperator a = new RealRandomWalkOperator();
+        a.initByName("scalar", x, "windowSize", 1.0, "weight", 1.0);
+        RealRandomWalkOperator b = new RealRandomWalkOperator();
+        b.initByName("scalar", x, "windowSize", 2.0, "weight", 1.0);
+        a.setAcceptedRejected(3, 7, 2, 6);
+        b.setAcceptedRejected(5, 1, 4, 0);
+
+        CoupledMCMC.swapTuning(a, b);
+
+        assertEquals(List.of(5, 1, 4, 0), List.of(a.get_m_nNrAccepted(), a.get_m_nNrRejected(),
+                a.get_m_nNrAcceptedForCorrection(), a.get_m_nNrRejectedForCorrection()));
+        assertEquals(List.of(3, 7, 2, 6), List.of(b.get_m_nNrAccepted(), b.get_m_nNrRejected(),
+                b.get_m_nNrAcceptedForCorrection(), b.get_m_nNrRejectedForCorrection()));
+        assertEquals(2.0, a.getCoercableParameterValue());
+        assertEquals(1.0, b.getCoercableParameterValue());
+    }
+
+    @Test
     void nanSwapAcceptanceIsAnError() {
         HeatedChain broken = new HeatedChain() {
             @Override
