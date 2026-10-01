@@ -117,7 +117,7 @@ public class CoupledPathSampler extends CoupledMCMC {
     public void run() throws IOException {
         checkOrWriteBetaSchedule();
         super.run();
-        // Logger writes through a buffered PrintStream and CoupledMCMC never closes its loggers
+        // CoupledMCMC never closes its loggers; close the likelihood logs before reading them back
         for (HeatedChain chain : chains) {
             for (CoupledLogger logger : chain.coupledLoggersInput.get()) {
                 if (LIKELIHOOD_LOGGER_ID.equals(logger.getID())) {
