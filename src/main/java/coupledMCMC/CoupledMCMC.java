@@ -113,6 +113,9 @@ public class CoupledMCMC extends MCMC {
 		if (nrOfChainsInput.get() < 1) {
 			throw new RuntimeException("chains must be at least 1");
 		}
+		if (resampleEveryInput.get() <= 0) {
+			throw new IllegalArgumentException("resampleEvery must be positive");
+		}
 		if (nrOfChainsInput.get() == 1) {
 			Log.warning.println("Warning: coupled MCMC needs at least 2 chains, but the number of chains is 1. Running plain MCMC.");
 		}

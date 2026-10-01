@@ -114,7 +114,7 @@ public class CoupledPathSamplerTest {
     @Test
     void failingChainAbortsRunInsteadOfReportingAnEstimate(@TempDir Path dir) {
         CoupledPathSampler sampler = normalNormalSampler(dir, 3, 2000);
-        // Logger.log divides by logEvery, so every chain thread throws on its first log call
+        // set after initAndValidate, which would reject it; Logger.log then divides by zero in every chain thread
         sampler.likelihoodLogEveryInput.setValue(0, sampler);
         RuntimeException e = assertThrows(RuntimeException.class, () -> runAndCleanUp(sampler, 3));
         assertInstanceOf(ArithmeticException.class, e.getCause());
@@ -157,6 +157,12 @@ public class CoupledPathSamplerTest {
         CoupledPathSampler s3 = new CoupledPathSampler();
         s3.burnInPercentageInput.setValue(100, s3);
         assertThrows(IllegalArgumentException.class, s3::initAndValidate);
+        CoupledPathSampler s4 = new CoupledPathSampler();
+        s4.likelihoodLogEveryInput.setValue(0, s4);
+        assertThrows(IllegalArgumentException.class, s4::initAndValidate);
+        CoupledPathSampler s5 = new CoupledPathSampler();
+        s5.resampleEveryInput.setValue(0, s5);
+        assertThrows(IllegalArgumentException.class, s5::initAndValidate);
     }
 
     @Test

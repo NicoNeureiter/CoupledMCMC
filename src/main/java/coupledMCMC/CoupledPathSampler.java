@@ -55,6 +55,9 @@ public class CoupledPathSampler extends CoupledMCMC {
         if (burnIn < 0 || burnIn >= 100) {
             throw new IllegalArgumentException("burnInPercentage must be in [0, 100)");
         }
+        if (likelihoodLogEveryInput.get() != null && likelihoodLogEveryInput.get() <= 0) {
+            throw new IllegalArgumentException("likelihoodLogEvery must be positive");
+        }
         betas = betaSchedule(nrOfChainsInput.get(), alphaInput.get());
         super.initAndValidate();
     }
