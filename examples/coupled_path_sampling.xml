@@ -117,40 +117,42 @@ name="alignment">
             <distribution id="BayesianSkyline.t:hcv" spec="BayesianSkyline" groupSizes="@bGroupSizes.t:hcv" popSizes="@bPopSizes.t:hcv">
                 <treeIntervals id="BSPTreeIntervals.t:hcv" spec="beast.base.evolution.tree.TreeIntervals" tree="@Tree.t:hcv"/>
             </distribution>
-            <distribution id="MarkovChainedPopSizes.t:hcv" spec="beast.base.inference.distribution.MarkovChainDistribution" jeffreys="true" parameter="@bPopSizes.t:hcv"/>
+            <prior id="PopSizePrior.t:hcv" name="distribution" x="@bPopSizes.t:hcv">
+                <LogNormal id="LogNormal.popSizes" name="distr" M="6.0" S="2.0"/>
+            </prior>
             <prior id="GammaShapePrior.s:hcv" name="distribution" x="@gammaShape.s:hcv">
                 <Exponential id="Exponential.0" name="distr">
                     <parameter id="RealParameter.0" lower="0.0" name="mean" upper="0.0">1.0</parameter>
                 </Exponential>
             </prior>
             <prior id="RateACPrior.s:hcv" name="distribution" x="@rateAC.s:hcv">
-                <Gamma id="Gamma.0" name="distr">
-                    <parameter id="RealParameter.01" estimate="false" name="alpha">0.05</parameter>
-                    <parameter id="RealParameter.02" estimate="false" name="beta">10.0</parameter>
+                <Gamma id="Gamma.0" name="distr" mode="ShapeScale">
+                    <parameter id="RealParameter.01" estimate="false" name="alpha">2.0</parameter>
+                    <parameter id="RealParameter.02" estimate="false" name="beta">0.5</parameter>
                 </Gamma>
             </prior>
             <prior id="RateAGPrior.s:hcv" name="distribution" x="@rateAG.s:hcv">
-                <Gamma id="Gamma.01" name="distr">
-                    <parameter id="RealParameter.03" estimate="false" name="alpha">0.05</parameter>
-                    <parameter id="RealParameter.04" estimate="false" name="beta">20.0</parameter>
+                <Gamma id="Gamma.01" name="distr" mode="ShapeScale">
+                    <parameter id="RealParameter.03" estimate="false" name="alpha">2.0</parameter>
+                    <parameter id="RealParameter.04" estimate="false" name="beta">0.5</parameter>
                 </Gamma>
             </prior>
             <prior id="RateATPrior.s:hcv" name="distribution" x="@rateAT.s:hcv">
-                <Gamma id="Gamma.02" name="distr">
-                    <parameter id="RealParameter.05" estimate="false" name="alpha">0.05</parameter>
-                    <parameter id="RealParameter.06" estimate="false" name="beta">10.0</parameter>
+                <Gamma id="Gamma.02" name="distr" mode="ShapeScale">
+                    <parameter id="RealParameter.05" estimate="false" name="alpha">2.0</parameter>
+                    <parameter id="RealParameter.06" estimate="false" name="beta">0.5</parameter>
                 </Gamma>
             </prior>
             <prior id="RateCGPrior.s:hcv" name="distribution" x="@rateCG.s:hcv">
-                <Gamma id="Gamma.03" name="distr">
-                    <parameter id="RealParameter.07" estimate="false" name="alpha">0.05</parameter>
-                    <parameter id="RealParameter.08" estimate="false" name="beta">10.0</parameter>
+                <Gamma id="Gamma.03" name="distr" mode="ShapeScale">
+                    <parameter id="RealParameter.07" estimate="false" name="alpha">2.0</parameter>
+                    <parameter id="RealParameter.08" estimate="false" name="beta">0.5</parameter>
                 </Gamma>
             </prior>
             <prior id="RateGTPrior.s:hcv" name="distribution" x="@rateGT.s:hcv">
-                <Gamma id="Gamma.04" name="distr">
-                    <parameter id="RealParameter.09" estimate="false" name="alpha">0.05</parameter>
-                    <parameter id="RealParameter.010" estimate="false" name="beta">10.0</parameter>
+                <Gamma id="Gamma.04" name="distr" mode="ShapeScale">
+                    <parameter id="RealParameter.09" estimate="false" name="alpha">2.0</parameter>
+                    <parameter id="RealParameter.010" estimate="false" name="beta">0.5</parameter>
                 </Gamma>
             </prior>
         </distribution>
