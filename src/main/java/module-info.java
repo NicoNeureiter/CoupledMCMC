@@ -10,6 +10,7 @@ open module coupled.mcmc {
     provides beast.base.core.BEASTInterface with
             coupledMCMC.CoupledLogger,
             coupledMCMC.CoupledMCMC,
+            coupledMCMC.CoupledPathSampler,
             coupledMCMC.DummyLogger,
             coupledMCMC.HeatedChain,
             coupledMCMC.HeatedChainLikelihoodOnly,
