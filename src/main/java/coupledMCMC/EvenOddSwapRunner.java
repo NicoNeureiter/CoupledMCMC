@@ -89,9 +89,10 @@ final class EvenOddSwapRunner {
     }
 
     /** colder must hold the lower chain number (higher beta) */
-    private void attemptSwap(HeatedChain colder, HeatedChain hotter) {
+    void attemptSwap(HeatedChain colder, HeatedChain hotter) {
         double logAlpha = colder.getScaledLogLikelihood(hotter.getBeta()) + hotter.getScaledLogLikelihood(colder.getBeta())
                 - colder.getCurrentLogLikelihood() - hotter.getCurrentLogLikelihood();
+        CoupledMCMC.checkSwapAcceptance(logAlpha, colder, hotter);
         mc3.totalSwaps++;
         if (Math.exp(logAlpha) <= Randomizer.nextDouble()) {
             return;

@@ -1,11 +1,13 @@
 package coupledMCMC;
 
 import beast.base.inference.CompoundDistribution;
+import beast.base.inference.Distribution;
 import beast.base.inference.Logger;
 import beast.base.inference.State;
 import beast.base.spec.domain.PositiveReal;
 import beast.base.spec.domain.Real;
 import beast.base.spec.inference.distribution.Normal;
+import beast.base.spec.inference.distribution.Uniform;
 import beast.base.spec.inference.operator.RealRandomWalkOperator;
 import beast.base.spec.inference.parameter.RealScalarParam;
 import beast.base.util.Randomizer;
@@ -29,17 +31,26 @@ public class CoupledPathSamplerTest {
 
     static CoupledPathSampler normalNormalSampler(Path dir, String rootDir, String traceFile, int chains, long chainLength) {
         RealScalarParam<Real> mu = new RealScalarParam<>(0.0, Real.INSTANCE);
-        mu.setID("mu");
+        Normal likelihood = new Normal();
+        likelihood.initByName("param", new RealScalarParam<>(1.0, Real.INSTANCE), "mean", mu,
+                "sigma", new RealScalarParam<>(1.0, PositiveReal.INSTANCE));
+        CompoundDistribution posterior = new CompoundDistribution();
+        posterior.initByName("distribution", standardNormalPrior(mu), "distribution", likelihood);
+        return sampler(dir, rootDir, traceFile, mu, posterior, likelihood, chains, chainLength);
+    }
+
+    static Normal standardNormalPrior(RealScalarParam<Real> mu) {
         Normal prior = new Normal();
         prior.initByName("param", mu, "mean", new RealScalarParam<>(0.0, Real.INSTANCE),
                 "sigma", new RealScalarParam<>(1.0, PositiveReal.INSTANCE));
         prior.setID("prior");
-        Normal likelihood = new Normal();
-        likelihood.initByName("param", new RealScalarParam<>(1.0, Real.INSTANCE), "mean", mu,
-                "sigma", new RealScalarParam<>(1.0, PositiveReal.INSTANCE));
+        return prior;
+    }
+
+    static CoupledPathSampler sampler(Path dir, String rootDir, String traceFile, RealScalarParam<Real> mu,
+                                      CompoundDistribution posterior, Distribution likelihood, int chains, long chainLength) {
+        mu.setID("mu");
         likelihood.setID("likelihood");
-        CompoundDistribution posterior = new CompoundDistribution();
-        posterior.initByName("distribution", prior, "distribution", likelihood);
         posterior.setID("posterior");
         State state = new State();
         state.initByName("stateNode", mu);
@@ -109,6 +120,18 @@ public class CoupledPathSamplerTest {
         }
         double expected = -0.5 * Math.log(4 * Math.PI) - 0.25;
         assertEquals(expected, sampler.logMarginalLikelihood, 0.05);
+    }
+
+    @Test
+    void nanSwapAcceptanceIsAnError() {
+        HeatedChain broken = new HeatedChain() {
+            @Override
+            protected double getScaledLogLikelihood(double beta) {
+                return Double.NaN;
+            }
+        };
+        EvenOddSwapRunner runner = new EvenOddSwapRunner(new CoupledPathSampler());
+        assertThrows(IllegalStateException.class, () -> runner.attemptSwap(broken, new HeatedChain()));
     }
 
     @Test

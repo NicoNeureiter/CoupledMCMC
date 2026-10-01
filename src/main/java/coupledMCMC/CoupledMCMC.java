@@ -274,6 +274,14 @@ public class CoupledMCMC extends MCMC {
 	protected void configureChain(HeatedChain chain, int chainNr) {
 	}
 
+	// a chain never holds a state with NaN tempered log probability, so NaN means a broken likelihood or posterior calculation
+	static void checkSwapAcceptance(double logAlpha, HeatedChain chain1, HeatedChain chain2) {
+		if (Double.isNaN(logAlpha)) {
+			throw new IllegalStateException("Swap acceptance probability is NaN for the chains at beta="
+					+ chain1.getBeta() + " and beta=" + chain2.getBeta());
+		}
+	}
+
 	protected double getTemperature(int i){
 		if (spacing==Spacing.Geometric) {
 			return i*deltaTemperature;
@@ -433,6 +441,7 @@ public class CoupledMCMC extends MCMC {
 			double p2after = chains[j].getScaledLogLikelihood(chains[i].getBeta());
 			
 			double logAlpha = (p1after + p2after) - (p1before  + p2before);
+			checkSwapAcceptance(logAlpha, chains[i], chains[j]);
 			if (Math.exp(logAlpha) > Randomizer.nextDouble()) {
 
 				successfullSwaps++;
@@ -617,6 +626,7 @@ public class CoupledMCMC extends MCMC {
 			double p2after = chains[j].getScaledLogLikelihood(chains[i].getBeta());
 			
 			double logAlpha = (p1after + p2after) - (p1before  + p2before);
+			checkSwapAcceptance(logAlpha, chains[i], chains[j]);
 			if (Math.exp(logAlpha) > Randomizer.nextDouble()) {
 				successfullSwaps++;
 				if (i == 0) {
