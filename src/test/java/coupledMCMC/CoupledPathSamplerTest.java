@@ -24,6 +24,10 @@ public class CoupledPathSamplerTest {
 
     // y = 1 observed, y | mu ~ N(mu, 1), mu ~ N(0, 1)  =>  y ~ N(0, 2)
     static CoupledPathSampler normalNormalSampler(Path dir, int chains, long chainLength) {
+        return normalNormalSampler(dir, dir.toString(), dir.resolve("trace.log").toString(), chains, chainLength);
+    }
+
+    static CoupledPathSampler normalNormalSampler(Path dir, String rootDir, String traceFile, int chains, long chainLength) {
         RealScalarParam<Real> mu = new RealScalarParam<>(0.0, Real.INSTANCE);
         mu.setID("mu");
         Normal prior = new Normal();
@@ -42,12 +46,12 @@ public class CoupledPathSamplerTest {
         RealRandomWalkOperator op = new RealRandomWalkOperator();
         op.initByName("scalar", mu, "windowSize", 1.0, "weight", 1.0);
         Logger trace = new Logger();
-        trace.initByName("fileName", dir.resolve("trace.log").toString(), "log", mu, "logEvery", 1000);
+        trace.initByName("fileName", traceFile, "log", mu, "logEvery", 1000);
         trace.setID("tracelog");
 
         CoupledPathSampler sampler = new CoupledPathSampler();
         sampler.initByName("chains", chains, "chainLength", chainLength, "resampleEvery", 100,
-                "rootdir", dir.toString(), "alpha", 0.3, "burnInPercentage", 10,
+                "rootdir", rootDir, "alpha", 0.3, "burnInPercentage", 10,
                 "distribution", posterior, "state", state, "operator", op, "logger", trace);
         sampler.setStateFile(dir.resolve("cps.state").toString(), false);
         return sampler;
@@ -78,6 +82,21 @@ public class CoupledPathSamplerTest {
         }
         for (int k = 0; k < 12; k++) {
             assertTrue(new File(sampler.stepDir(k), CoupledPathSampler.LIKELIHOOD_LOG_FILE).exists());
+        }
+    }
+
+    @Test
+    void honoursBeastFileNamePrefix(@TempDir Path dir) throws Exception {
+        // BEAST's -working / -prefix options set file.name.prefix, which Logger prepends to every log file
+        System.setProperty("file.name.prefix", dir + File.separator);
+        try {
+            CoupledPathSampler sampler = normalNormalSampler(dir, "cps", "trace.log", 3, 2000);
+            sampler.setStateFile("cps.state", false);
+            runAndCleanUp(sampler, 3);
+            assertTrue(Files.exists(dir.resolve("cps/step0/" + CoupledPathSampler.LIKELIHOOD_LOG_FILE)));
+            assertFalse(Double.isNaN(sampler.logMarginalLikelihood));
+        } finally {
+            System.clearProperty("file.name.prefix");
         }
     }
 

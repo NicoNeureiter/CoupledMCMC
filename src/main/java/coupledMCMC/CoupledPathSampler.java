@@ -74,7 +74,7 @@ public class CoupledPathSampler extends CoupledMCMC {
     protected void configureChain(HeatedChain chain, int chainNr) {
         // added after CoupledMCMC suppresses heated-chain loggers, so every temperature slot is logged;
         // swapLoggers swaps it by ID, so each file follows its beta rather than its replica
-        File dir = new File(stepDir(chainNr));
+        File dir = stepDir(chainNr);
         if (!dir.exists() && !dir.mkdirs()) {
             throw new RuntimeException("Could not create directory " + dir);
         }
@@ -82,7 +82,7 @@ public class CoupledPathSampler extends CoupledMCMC {
                 ? likelihoodLogEveryInput.get()
                 : (int) Math.max(1, chainLengthInput.get() / 1000);
         CoupledLogger logger = new CoupledLogger();
-        logger.initByName("fileName", new File(dir, LIKELIHOOD_LOG_FILE).getPath(),
+        logger.initByName("fileName", stepDirName(chainNr) + File.separator + LIKELIHOOD_LOG_FILE,
                 "log", ((HeatedChainLikelihoodOnly) chain).likelihood, "logEvery", logEvery);
         logger.setID(LIKELIHOOD_LOGGER_ID);
         chain.coupledLoggersInput.get().add(logger);
@@ -132,8 +132,14 @@ public class CoupledPathSampler extends CoupledMCMC {
         Log.info.println("marginal L estimate = " + logMarginalLikelihood);
     }
 
-    String stepDir(int k) {
-        return new File(rootDirInput.get()).getAbsolutePath() + File.separator + "step" + k;
+    String stepDirName(int k) {
+        return rootDirInput.get() + File.separator + "step" + k;
+    }
+
+    // Logger prepends file.name.prefix (BEAST's -prefix / -working) to its file name, so mirror that here
+    File stepDir(int k) {
+        String prefix = System.getProperty("file.name.prefix");
+        return new File((prefix != null ? prefix : "") + stepDirName(k));
     }
 
     static double[] steppingStoneContributions(double[] betasAscending, double[][] logLs) {
