@@ -68,16 +68,9 @@ public class CoupledPathSamplerTest {
         return sampler;
     }
 
-    static void runAndCleanUp(CoupledPathSampler sampler, int chains) throws Exception {
+    static void runSampler(CoupledPathSampler sampler) throws Exception {
         Logger.FILE_MODE = Logger.LogFileMode.overwrite;
-        try {
-            sampler.run();
-        } finally {
-            // CoupledMCMC writes per-chain state files to the working directory, by file name only
-            for (int k = 0; k < chains; k++) {
-                Files.deleteIfExists(Path.of("cps." + k + "state"));
-            }
-        }
+        sampler.run();
     }
 
     @Test
@@ -85,7 +78,7 @@ public class CoupledPathSamplerTest {
         Randomizer.setSeed(127);
         CoupledPathSampler sampler = normalNormalSampler(dir, 12, 200_000);
         sampler.evenOddSwapsInput.setValue(false, sampler);
-        runAndCleanUp(sampler, 12);
+        runSampler(sampler);
         assertEquals(2000, sampler.totalSwaps);
         double expected = -0.5 * Math.log(4 * Math.PI) - 0.25;
         assertEquals(expected, sampler.logMarginalLikelihood, 0.05);
@@ -111,7 +104,7 @@ public class CoupledPathSamplerTest {
     void evenOddSwapsAttemptEveryPairEachRound(@TempDir Path dir) throws Exception {
         Randomizer.setSeed(127);
         CoupledPathSampler sampler = normalNormalSampler(dir, 12, 200_000);
-        runAndCleanUp(sampler, 12);
+        runSampler(sampler);
         // 1999 swap rounds (none after the last segment), alternating 6 even and 5 odd pairs
         assertEquals(1000 * 6 + 999 * 5, sampler.totalSwaps);
         assertTrue(sampler.successfullSwaps > 0);
@@ -136,7 +129,7 @@ public class CoupledPathSamplerTest {
         posterior.initByName("distribution", likelihood, "distribution", standardNormalPrior(mu));
         CoupledPathSampler sampler = sampler(dir, dir.toString(), dir.resolve("trace.log").toString(),
                 mu, posterior, likelihood, 8, 200_000);
-        runAndCleanUp(sampler, 8);
+        runSampler(sampler);
         // Z = integral over mu <= 0 of phi(mu) / (10 - mu); sampling the prior truncated to mu <= 0 would give 2Z
         int n = 100_000;
         double h = 10.0 / n, z = 0;
@@ -165,17 +158,17 @@ public class CoupledPathSamplerTest {
         CoupledPathSampler sampler = normalNormalSampler(dir, 3, 2000);
         // set after initAndValidate, which would reject it; Logger.log then divides by zero in every chain thread
         sampler.likelihoodLogEveryInput.setValue(0, sampler);
-        RuntimeException e = assertThrows(RuntimeException.class, () -> runAndCleanUp(sampler, 3));
+        RuntimeException e = assertThrows(RuntimeException.class, () -> runSampler(sampler));
         assertInstanceOf(ArithmeticException.class, e.getCause());
         assertTrue(Double.isNaN(sampler.logMarginalLikelihood));
     }
 
     @Test
     void resumeWithDifferentBetaScheduleIsRejected(@TempDir Path dir) throws Exception {
-        runAndCleanUp(normalNormalSampler(dir, 3, 2000), 3);
+        runSampler(normalNormalSampler(dir, 3, 2000));
         CoupledPathSampler resumed = normalNormalSampler(dir, 4, 2000);
         resumed.setStateFile(dir.resolve("cps.state").toString(), true);
-        assertThrows(IllegalStateException.class, () -> runAndCleanUp(resumed, 4));
+        assertThrows(IllegalStateException.class, () -> runSampler(resumed));
     }
 
     @Test
@@ -185,9 +178,11 @@ public class CoupledPathSamplerTest {
         try {
             CoupledPathSampler sampler = normalNormalSampler(dir, "cps", "trace.log", 3, 2000);
             sampler.setStateFile("cps.state", false);
-            runAndCleanUp(sampler, 3);
+            runSampler(sampler);
             assertTrue(Files.exists(dir.resolve("cps/step0/" + CoupledPathSampler.LIKELIHOOD_LOG_FILE)));
             assertFalse(Double.isNaN(sampler.logMarginalLikelihood));
+            // per-chain state files go next to the main state file, i.e. into the prefix directory
+            assertTrue(Files.exists(dir.resolve("cps.0state")));
         } finally {
             System.clearProperty("file.name.prefix");
         }

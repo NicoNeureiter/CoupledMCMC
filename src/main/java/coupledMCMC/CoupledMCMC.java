@@ -239,11 +239,11 @@ public class CoupledMCMC extends MCMC {
 				chains[i].setTemperature(i, getTemperature(i));
 				configureChain(chains[i], i);
 
-				// needed to avoid error of putting the working dir twice
-				String[] splittedFileName = stateFileName.split("/");
-				
-				chains[i].setStateFile(
-						splittedFileName[splittedFileName.length-1].replace(".state", "." + i + "state"), restoreFromFile);
+				// stateFileName already carries file.name.prefix, and HeatedChain.setStateFile does not add it again
+				String chainStateFile = stateFileName.endsWith(".state")
+						? stateFileName.substring(0, stateFileName.length() - ".state".length()) + "." + i + "state"
+						: stateFileName + "." + i + "state";
+				chains[i].setStateFile(chainStateFile, restoreFromFile);
 				chains[i].setChainNr(i);
 				chains[i].run();
 
