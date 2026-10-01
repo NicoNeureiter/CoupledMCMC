@@ -12,6 +12,7 @@ import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Description("Path sampling / stepping stone marginal likelihood estimation in which the power posteriors "
         + "run as coupled MCMC chains, so that neighbouring steps can swap states")
@@ -19,6 +20,7 @@ public class CoupledPathSampler extends CoupledMCMC {
     public static final String LIKELIHOOD_LOG_FILE = "likelihood.log";
     static final String LIKELIHOOD_LOGGER_ID = "pathSamplingLikelihood";
     static final String LIKELIHOOD_ID = "likelihood";
+    static final String BETA_SCHEDULE_FILE = "betas.txt";
 
     public Input<Double> alphaInput = new Input<>("alpha", "alpha parameter of the Beta(alpha,1) distribution used to space out steps. "
             + "If alpha <= 0, uniform intervals are used", 0.3);
@@ -91,8 +93,26 @@ public class CoupledPathSampler extends CoupledMCMC {
         chain.coupledLoggersInput.get().add(logger);
     }
 
+    // resumed logs are appended, so a changed schedule would mix samples from different betas in one step
+    void checkOrWriteBetaSchedule() throws IOException {
+        File file = new File(stepDir(0).getParentFile(), BETA_SCHEDULE_FILE);
+        String schedule = Arrays.stream(betas).mapToObj(Double::toString).collect(Collectors.joining("\n"));
+        if (restoreFromFile) {
+            if (!file.exists() || !Files.readString(file.toPath()).equals(schedule)) {
+                throw new IllegalStateException("Cannot resume: the beta schedule differs from the one in " + file
+                        + " (chains and alpha must not change between runs)");
+            }
+        } else {
+            if (!file.getParentFile().exists() && !file.getParentFile().mkdirs()) {
+                throw new IOException("Could not create directory " + file.getParentFile());
+            }
+            Files.writeString(file.toPath(), schedule);
+        }
+    }
+
     @Override
     public void run() throws IOException {
+        checkOrWriteBetaSchedule();
         super.run();
         // Logger writes through a buffered PrintStream and CoupledMCMC never closes its loggers
         for (HeatedChain chain : chains) {

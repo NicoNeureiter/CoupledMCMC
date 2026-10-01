@@ -122,6 +122,14 @@ public class CoupledPathSamplerTest {
     }
 
     @Test
+    void resumeWithDifferentBetaScheduleIsRejected(@TempDir Path dir) throws Exception {
+        runAndCleanUp(normalNormalSampler(dir, 3, 2000), 3);
+        CoupledPathSampler resumed = normalNormalSampler(dir, 4, 2000);
+        resumed.setStateFile(dir.resolve("cps.state").toString(), true);
+        assertThrows(IllegalStateException.class, () -> runAndCleanUp(resumed, 4));
+    }
+
+    @Test
     void honoursBeastFileNamePrefix(@TempDir Path dir) throws Exception {
         // BEAST's -working / -prefix options set file.name.prefix, which Logger prepends to every log file
         System.setProperty("file.name.prefix", dir + File.separator);
