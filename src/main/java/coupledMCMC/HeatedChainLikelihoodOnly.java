@@ -70,7 +70,7 @@ public class HeatedChainLikelihoodOnly extends HeatedChain {
 	private double calculateLogPrior() {
 		double logPrior = 0;
 		for (Distribution part : priorParts) {
-			logPrior += part.isDirtyCalculation() ? part.calculateLogP() : part.getCurrentLogP();
+			logPrior += part.somethingIsDirty() ? part.calculateLogP() : part.getCurrentLogP();
 		}
 		return logPrior;
 	}
