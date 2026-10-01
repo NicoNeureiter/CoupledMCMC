@@ -11,6 +11,14 @@ import beast.base.util.Randomizer;
 final class EvenOddSwapRunner {
     private final CoupledMCMC mc3;
 
+    // indexed by the colder slot of a neighbour pair
+    long[] pairAttempts, pairAccepts;
+    // a replica's trip from the coldest slot to the hottest and back; few round trips mean
+    // the hot chains' exploration rarely reaches the cold end
+    int roundTrips;
+    private static final int UNSEEN = 0, LAST_AT_COLD = 1, HOT_SINCE_COLD = 2;
+    private int[] tripState;
+
     EvenOddSwapRunner(CoupledMCMC mc3) {
         this.mc3 = mc3;
     }
@@ -30,6 +38,10 @@ final class EvenOddSwapRunner {
         mc3.threads = threads;
         long chainLength = mc3.chainLengthInput.get();
         int[] slotToChain = new int[chains.length];
+        pairAttempts = new long[chains.length - 1];
+        pairAccepts = new long[chains.length - 1];
+        tripState = new int[chains.length];
+        updateRoundTrips(chains);
 
         System.out.println("sample\tswapsColdChain\tswapProbability");
         long round = 0;
@@ -71,6 +83,7 @@ final class EvenOddSwapRunner {
             for (int[] pair : neighbourPairs(chains.length, round)) {
                 attemptSwap(chains[slotToChain[pair[0]]], chains[slotToChain[pair[1]]]);
             }
+            updateRoundTrips(chains);
 
             System.out.println((end + mc3.sampleOffset) + "\t" + mc3.successfullSwaps0 + "\t"
                     + ((double) mc3.successfullSwaps / mc3.totalSwaps));
@@ -86,6 +99,36 @@ final class EvenOddSwapRunner {
         System.err.println("#Swap attempts = " + mc3.totalSwaps);
         System.err.println("#Successful swaps = " + mc3.successfullSwaps);
         System.err.println("#Successful swaps with cold chain = " + mc3.successfullSwaps0);
+        printDiagnostics(chains);
+    }
+
+    private void updateRoundTrips(HeatedChain[] chains) {
+        int hottest = chains.length - 1;
+        for (int k = 0; k < chains.length; k++) {
+            int slot = chains[k].getChainNr();
+            if (slot == 0) {
+                if (tripState[k] == HOT_SINCE_COLD) {
+                    roundTrips++;
+                }
+                tripState[k] = LAST_AT_COLD;
+            } else if (slot == hottest && tripState[k] == LAST_AT_COLD) {
+                tripState[k] = HOT_SINCE_COLD;
+            }
+        }
+    }
+
+    private void printDiagnostics(HeatedChain[] chains) {
+        double[] slotBeta = new double[chains.length];
+        for (HeatedChain chain : chains) {
+            slotBeta[chain.getChainNr()] = chain.getBeta();
+        }
+        System.out.println("\nSwap acceptance per neighbour pair");
+        System.out.println("slots   beta(colder)  beta(hotter)  attempts   acceptance");
+        for (int s = 0; s < pairAttempts.length; s++) {
+            System.out.println(String.format("%-7s %-13.6g %-13.6g %-10d %.4f", s + "-" + (s + 1), slotBeta[s], slotBeta[s + 1],
+                    pairAttempts[s], pairAttempts[s] > 0 ? (double) pairAccepts[s] / pairAttempts[s] : Double.NaN));
+        }
+        System.out.println("Round trips (coldest -> hottest -> coldest slot): " + roundTrips);
     }
 
     private static void join(Thread thread) {
@@ -101,11 +144,14 @@ final class EvenOddSwapRunner {
         double logAlpha = colder.getScaledLogLikelihood(hotter.getBeta()) + hotter.getScaledLogLikelihood(colder.getBeta())
                 - colder.getCurrentLogLikelihood() - hotter.getCurrentLogLikelihood();
         CoupledMCMC.checkSwapAcceptance(logAlpha, colder, hotter);
+        int pair = colder.getChainNr();
         mc3.totalSwaps++;
+        pairAttempts[pair]++;
         if (Math.exp(logAlpha) <= Randomizer.nextDouble()) {
             return;
         }
         mc3.successfullSwaps++;
+        pairAccepts[pair]++;
         if (colder.getChainNr() == 0) {
             mc3.successfullSwaps0++;
         }

@@ -108,6 +108,12 @@ public class CoupledPathSamplerTest {
         // 1999 swap rounds (none after the last segment), alternating 6 even and 5 odd pairs
         assertEquals(1000 * 6 + 999 * 5, sampler.totalSwaps);
         assertTrue(sampler.successfullSwaps > 0);
+        EvenOddSwapRunner runner = sampler.swapRunner;
+        for (int pair = 0; pair < 11; pair++) {
+            assertEquals(pair % 2 == 0 ? 1000 : 999, runner.pairAttempts[pair]);
+        }
+        assertEquals(sampler.successfullSwaps, java.util.Arrays.stream(runner.pairAccepts).sum());
+        assertTrue(runner.roundTrips > 0);
         for (HeatedChain chain : sampler.chains) {
             assertEquals(sampler.betas[chain.getChainNr()], chain.getBeta());
         }

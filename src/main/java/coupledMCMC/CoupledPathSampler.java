@@ -32,6 +32,7 @@ public class CoupledPathSampler extends CoupledMCMC {
             + "neighbour pairs (alternating) instead of a single random neighbour pair", true);
 
     double[] betas;
+    EvenOddSwapRunner swapRunner;
     double logMarginalLikelihood = Double.NaN;
 
     public CoupledPathSampler() {
@@ -131,7 +132,8 @@ public class CoupledPathSampler extends CoupledMCMC {
     @Override
     protected void runChains() {
         if (evenOddSwapsInput.get()) {
-            new EvenOddSwapRunner(this).run();
+            swapRunner = new EvenOddSwapRunner(this);
+            swapRunner.run();
         } else {
             super.runChains();
         }
