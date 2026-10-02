@@ -8,6 +8,7 @@ open module coupled.mcmc {
     exports coupledMCMC;
 
     provides beast.base.core.BEASTInterface with
+            coupledMCMC.BatchedCoupledPathSampler,
             coupledMCMC.CoupledLogger,
             coupledMCMC.CoupledMCMC,
             coupledMCMC.CoupledPathSampler,

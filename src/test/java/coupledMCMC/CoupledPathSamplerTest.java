@@ -49,6 +49,12 @@ public class CoupledPathSamplerTest {
 
     static CoupledPathSampler sampler(Path dir, String rootDir, String traceFile, RealScalarParam<Real> mu,
                                       CompoundDistribution posterior, Distribution likelihood, int chains, long chainLength) {
+        return configure(new CoupledPathSampler(), dir, rootDir, traceFile, mu, posterior, likelihood, chains, chainLength);
+    }
+
+    static <S extends CoupledPathSampler> S configure(S sampler, Path dir, String rootDir, String traceFile,
+                                                      RealScalarParam<Real> mu, CompoundDistribution posterior,
+                                                      Distribution likelihood, int chains, long chainLength) {
         mu.setID("mu");
         likelihood.setID("likelihood");
         posterior.setID("posterior");
@@ -60,7 +66,6 @@ public class CoupledPathSamplerTest {
         trace.initByName("fileName", traceFile, "log", mu, "logEvery", 1000);
         trace.setID("tracelog");
 
-        CoupledPathSampler sampler = new CoupledPathSampler();
         sampler.initByName("chains", chains, "chainLength", chainLength, "resampleEvery", 100,
                 "rootdir", rootDir, "alpha", 0.3, "burnInPercentage", 10,
                 "distribution", posterior, "state", state, "operator", op, "logger", trace);
