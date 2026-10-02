@@ -36,7 +36,7 @@ final class EvenOddSwapRunner {
         HeatedChain[] chains = mc3.chains;
         Thread[] threads = new Thread[chains.length];
         mc3.threads = threads;
-        long chainLength = mc3.chainLengthInput.get();
+        long chainLength = mc3.currentChainLength();
         int[] slotToChain = new int[chains.length];
         pairAttempts = new long[chains.length - 1];
         pairAccepts = new long[chains.length - 1];

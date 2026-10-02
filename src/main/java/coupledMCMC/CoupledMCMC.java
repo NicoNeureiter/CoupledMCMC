@@ -139,7 +139,7 @@ public class CoupledMCMC extends MCMC {
 				
 	} // initAndValidate
 	
-	private void initRun(){
+	protected void initRun(){
 		XMLProducer p = new XMLProducer();
 		List<CoupledLogger> coupledLoggers = new ArrayList<>();
 		for (Logger logger : loggersInput.get()) {
@@ -156,7 +156,7 @@ public class CoupledMCMC extends MCMC {
 					"distribution", posteriorInput.get(), 
 					"operator", operatorsInput.get(),
 					"state", startStateInput.get(),
-					"chainLength", chainLengthInput.get(),
+					"chainLength", chainLengthOfRun(),
 					"storeEvery", storeEveryInput.get(),
 					"numInitializationAttempts", numInitializationAttempts.get(),
 					"coupledLogger", coupledLoggers
@@ -167,7 +167,7 @@ public class CoupledMCMC extends MCMC {
 					"operator", operatorsInput.get(),
 					"state", startStateInput.get(),
 					"init", initialisersInput.get(),
-					"chainLength", chainLengthInput.get(),
+					"chainLength", chainLengthOfRun(),
 					"storeEvery", storeEveryInput.get(),
 					"numInitializationAttempts", numInitializationAttempts.get(),
 					"coupledLogger", coupledLoggers
@@ -239,11 +239,7 @@ public class CoupledMCMC extends MCMC {
 				chains[i].setTemperature(i, getTemperature(i));
 				configureChain(chains[i], i);
 
-				// stateFileName already carries file.name.prefix, and HeatedChain.setStateFile does not add it again
-				String chainStateFile = stateFileName.endsWith(".state")
-						? stateFileName.substring(0, stateFileName.length() - ".state".length()) + "." + i + "state"
-						: stateFileName + "." + i + "state";
-				chains[i].setStateFile(chainStateFile, restoreFromFile);
+				chains[i].setStateFile(chainStateFileName(i), restoreChainFromFile(i));
 				chains[i].setChainNr(i);
 				chains[i].run();
 
@@ -256,7 +252,7 @@ public class CoupledMCMC extends MCMC {
 		finishTimes = new long[chains.length];
 		
 
-		chainLength = chainLengthInput.get();
+		chainLength = chainLengthOfRun();
 		
 		// pre schedule which chains to swap when
 		if (preScheduleInput.get()){
@@ -272,6 +268,26 @@ public class CoupledMCMC extends MCMC {
 	}
 	
 	protected void configureChain(HeatedChain chain, int chainNr) {
+	}
+
+	// stateFileName already carries file.name.prefix, and HeatedChain.setStateFile does not add it again
+	protected String chainStateFileName(int i) {
+		return stateFileName.endsWith(".state")
+				? stateFileName.substring(0, stateFileName.length() - ".state".length()) + "." + i + "state"
+				: stateFileName + "." + i + "state";
+	}
+
+	protected boolean restoreChainFromFile(int i) {
+		return restoreFromFile;
+	}
+
+	protected long chainLengthOfRun() {
+		return chainLengthInput.get();
+	}
+
+	// MCMC.chainLength is protected in another package, so the swap runners read it through here
+	long currentChainLength() {
+		return chainLength;
 	}
 
 	// Randomizer keeps one generator per thread name and never removes any, so a chain's
