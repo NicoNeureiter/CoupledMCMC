@@ -66,6 +66,19 @@ with:
 
 Each step's likelihood trace is written to `<rootdir>/step<k>/likelihood.log`, the same layout `PathSampler` uses, so `PathSampleAnalyser` can re-analyse it. At the end the per-step table and the line `marginal L estimate = ...` are printed (stepping stone; thermodynamic integration when `alpha <= 0`). Swaps correlate the steps, so standard errors computed as if the steps were independent are too small. See `examples/coupled_path_sampling.xml`.
 
+### Batched coupled path sampling
+
+`BatchedCoupledPathSampler` runs the steps in sequential batches instead of all at once. The steps of a batch are coupled chains, as above, and every chain of the next batch starts from the final state (and operator tuning) of the previous batch's last step, the one with the smallest beta, instead of from the initial state. Only the first batch has to burn in from scratch, so the chains can be much shorter and the number of steps larger.
+
+```xml
+<run id="mcmc" spec="coupledMCMC.BatchedCoupledPathSampler" chainLength="500000" preBurnin="1500000"
+     chains="64" batchSize="8" alpha="0.25" rootdir="cps" burnInPercentage="20" resampleEvery="100">
+```
+
+* `chains` — total number of steps; `batchSize` — how many run at the same time, for example the number of CPU cores. The last batch takes the remainder. Without `batchSize` all steps run at once and this is a plain `CoupledPathSampler`.
+* `preBurnin` — samples the first batch runs before it logs anything. It is the only batch that starts from the initial state, so size it for the burn-in of a cold start.
+* Swaps happen within a batch only, and the batches follow the steps from beta = 1 to beta = 0. Output files and the estimate are the same as for `CoupledPathSampler`. Runs cannot be resumed.
+
 ## Citation
 
 Müller NF, Bouckaert RR. Adaptive Metropolis-coupled MCMC for BEAST 2. PeerJ. 2020 Sep 16;8:e9473. [DOI:10.7717/peerj.9473](https://doi.org/10.7717/peerj.9473)
