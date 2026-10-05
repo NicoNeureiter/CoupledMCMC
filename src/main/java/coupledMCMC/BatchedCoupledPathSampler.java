@@ -11,13 +11,25 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Description("Path sampling with coupled chains run in sequential batches. The steps of a batch run at the same time "
-        + "as coupled chains; the steps of the next batch start from the final state of the previous batch's last "
-        + "(hottest) step instead of from the initial state, so only the first batch needs a long burn-in. "
+        + "as coupled chains; the chains of the next batch start from final states of the previous batch "
+        + "instead of from the initial state (see warmStart), so only the first batch needs a long burn-in. "
         + "Steps are ordered from the posterior (beta = 1) to the prior (beta = 0). "
         + "The inherited preBurnin input is the number of samples the first batch runs before it starts logging.")
 public class BatchedCoupledPathSampler extends CoupledPathSampler {
     public Input<Integer> batchSizeInput = new Input<>("batchSize", "number of steps (chains) that run at the same time, "
             + "for example the number of CPU cores. Default: all steps at once, which is a plain CoupledPathSampler");
+
+    public enum WarmStart {
+        /** every chain of a batch starts from the final state of the previous batch's hottest chain */
+        hottest,
+        /** chain i of a batch starts from the final state of chain i (the i-th coldest) of the previous batch */
+        sameSlot
+    }
+
+    public Input<WarmStart> warmStartInput = new Input<>("warmStart", "which final states of the previous batch the "
+            + "chains of the next batch start from: the hottest chain for all of them (hottest), or the chain with the "
+            + "same position in the batch, coldest with coldest (sameSlot), which keeps the chains different from each other",
+            WarmStart.hottest, WarmStart.values());
 
     private enum Start { INITIAL, OWN_FILES, PREVIOUS_BATCH }
 
@@ -96,7 +108,8 @@ public class BatchedCoupledPathSampler extends CoupledPathSampler {
         int steps = betas.length;
         int[][] batches = batchRanges(steps, batchSizeInput.get() == null ? steps : batchSizeInput.get());
         long length = chainLengthInput.get();
-        Path warmStart = Path.of(stateFileName + ".warmstart");
+        WarmStart mode = warmStartInput.get();
+        int previousSize = 0;
 
         for (int b = 0; b < batches.length; b++) {
             batchIndex = b;
@@ -112,19 +125,30 @@ public class BatchedCoupledPathSampler extends CoupledPathSampler {
             } else if (b == 0) {
                 runBatch(n, length, true, Start.INITIAL);
             } else {
-                // every chain of this batch restores the state, and the operator tuning, of the previous hottest step
+                // every chain restores the state, and the operator tuning, of the chain it continues
                 for (int i = 0; i < n; i++) {
-                    Files.copy(warmStart, Path.of(chainStateFileName(i)), StandardCopyOption.REPLACE_EXISTING);
+                    int source = mode == WarmStart.hottest ? previousSize - 1 : Math.min(i, previousSize - 1);
+                    Files.copy(warmStartFile(source), Path.of(chainStateFileName(i)), StandardCopyOption.REPLACE_EXISTING);
                 }
                 runBatch(n, length, true, Start.PREVIOUS_BATCH);
             }
 
             if (b < batches.length - 1) {
                 // slot n-1 is the hottest step; its file holds the final state of whichever chain ended there
-                Files.copy(Path.of(chainStateFileName(n - 1)), warmStart, StandardCopyOption.REPLACE_EXISTING);
+                for (int slot = mode == WarmStart.hottest ? n - 1 : 0; slot < n; slot++) {
+                    Files.copy(Path.of(chainStateFileName(slot)), warmStartFile(slot), StandardCopyOption.REPLACE_EXISTING);
+                }
+                previousSize = n;
             }
         }
-        Files.deleteIfExists(warmStart);
+        for (int slot = 0; slot < batches[0][1]; slot++) {
+            Files.deleteIfExists(warmStartFile(slot));
+        }
+    }
+
+    // the final state of a slot of the previous batch, kept because the next batch overwrites the slots' own files
+    private Path warmStartFile(int slot) {
+        return Path.of(stateFileName + ".warmstart" + slot);
     }
 
     private void runBatch(int n, long length, boolean logging, Start start) throws IOException {

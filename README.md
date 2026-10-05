@@ -76,6 +76,7 @@ Each step's likelihood trace is written to `<rootdir>/step<k>/likelihood.log`, t
 ```
 
 * `chains` — total number of steps; `batchSize` — how many run at the same time, for example the number of CPU cores. The last batch takes the remainder. Without `batchSize` all steps run at once and this is a plain `CoupledPathSampler`.
+* `warmStart` — which states the chains of the next batch start from: `hottest` (default) starts every chain from the final state of the previous batch's hottest chain; `sameSlot` starts chain *i* from chain *i* of the previous batch (coldest with coldest), which keeps the chains different from each other.
 * `preBurnin` — samples the first batch runs before it logs anything. It is the only batch that starts from the initial state, so size it for the burn-in of a cold start.
 * Swaps happen within a batch only, and the batches follow the steps from beta = 1 to beta = 0. Output files and the estimate are the same as for `CoupledPathSampler`. Runs cannot be resumed.
 
