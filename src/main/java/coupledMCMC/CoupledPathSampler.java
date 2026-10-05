@@ -79,6 +79,12 @@ public class CoupledPathSampler extends CoupledMCMC {
         return 1.0 / betas[stepOf(i)] - 1.0;
     }
 
+    // swaps are between neighbours only, so the schedule of random pairs is never used; building it also never
+    // finishes for a single chain, which has no partner to pair with
+    @Override
+    void buildSchedule() {
+    }
+
     // the step of the beta schedule that the chain with this index samples
     protected int stepOf(int chainNr) {
         return chainNr;

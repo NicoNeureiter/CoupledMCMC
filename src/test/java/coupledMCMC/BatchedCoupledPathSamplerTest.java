@@ -42,6 +42,14 @@ public class BatchedCoupledPathSamplerTest {
     }
 
     @Test
+    void aBatchOfOneChainRunsToCompletion(@TempDir Path dir) {
+        // batchSize 1 (or a remainder of 1) gives batches of a single chain, which has nothing to swap with
+        BatchedCoupledPathSampler sampler = sampler(dir, 0.0, 3, 1, 0, 2_000);
+        assertTimeoutPreemptively(java.time.Duration.ofSeconds(60), () -> CoupledPathSamplerTest.runSampler(sampler));
+        assertFalse(Double.isNaN(sampler.logMarginalLikelihood));
+    }
+
+    @Test
     void batchRangesSplitTheStepsAndKeepTheRemainder() {
         assertArrayEquals(new int[][]{{0, 8}, {8, 8}, {16, 4}}, BatchedCoupledPathSampler.batchRanges(20, 8));
         assertArrayEquals(new int[][]{{0, 5}}, BatchedCoupledPathSampler.batchRanges(5, 5));
