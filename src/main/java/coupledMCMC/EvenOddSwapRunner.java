@@ -16,7 +16,8 @@ final class EvenOddSwapRunner {
     // a replica's trip from the coldest slot to the hottest and back; few round trips mean
     // the hot chains' exploration rarely reaches the cold end
     int roundTrips;
-    private static final int UNSEEN = 0, LAST_AT_COLD = 1, HOT_SINCE_COLD = 2;
+    // per chain: 0 until it has been at the coldest slot, then LAST_AT_COLD, then HOT_SINCE_COLD
+    private static final int LAST_AT_COLD = 1, HOT_SINCE_COLD = 2;
     private int[] tripState;
 
     EvenOddSwapRunner(CoupledMCMC mc3) {
