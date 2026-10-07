@@ -235,11 +235,7 @@ public class CoupledMCMC extends MCMC {
 				chains[i].setResampleEvery(resampleEvery);
 				chains[i].setTemperature(i, getTemperature(i));
 				
-				// needed to avoid error of putting the working dir twice
-				String[] splittedFileName = stateFileName.split("/");
-				
-				chains[i].setStateFile(
-						splittedFileName[splittedFileName.length-1].replace(".state", "." + i + "state"), restoreFromFile);
+				chains[i].setStateFile(chainStateFileName(i), restoreFromFile);
 				chains[i].setChainNr(i);
 				chains[i].run();
 
@@ -267,6 +263,13 @@ public class CoupledMCMC extends MCMC {
 		
 	}
 	
+	// stateFileName already carries file.name.prefix, and HeatedChain.setStateFile does not add it again
+	protected String chainStateFileName(int i) {
+		return stateFileName.endsWith(".state")
+				? stateFileName.substring(0, stateFileName.length() - ".state".length()) + "." + i + "state"
+				: stateFileName + "." + i + "state";
+	}
+
 	// Randomizer keeps one generator per thread name and never removes any, so a chain's
 	// threads must reuse one name rather than get a fresh "Thread-N" every round
 	static String chainThreadName(int chainIndex) {
