@@ -76,7 +76,7 @@ public class CoupledPathSampler extends CoupledMCMC {
     // HeatedChain.setTemperature maps t to 1/(1+t); t = +Infinity gives beta = 0 exactly
     @Override
     protected double getTemperature(int i) {
-        return 1.0 / betas[i] - 1.0;
+        return 1.0 / betas[stepOf(i)] - 1.0;
     }
 
     // swaps are between neighbours only, so the schedule of random pairs is never used; building it also never
@@ -85,19 +85,24 @@ public class CoupledPathSampler extends CoupledMCMC {
     void buildSchedule() {
     }
 
+    // the step of the beta schedule that the chain with this index samples
+    protected int stepOf(int chainNr) {
+        return chainNr;
+    }
+
     @Override
     protected void configureChain(HeatedChain chain, int chainNr) {
         // added after CoupledMCMC suppresses heated-chain loggers, so every temperature slot is logged;
         // swapLoggers swaps it by ID, so each file follows its beta rather than its replica
-        File dir = stepDir(chainNr);
+        File dir = stepDir(stepOf(chainNr));
         if (!dir.exists() && !dir.mkdirs()) {
             throw new RuntimeException("Could not create directory " + dir);
         }
         int logEvery = likelihoodLogEveryInput.get() != null
                 ? likelihoodLogEveryInput.get()
-                : (int) Math.max(1, chainLengthInput.get() / 1000);
+                : (int) Math.max(1, chainLengthOfRun() / 1000);
         CoupledLogger logger = new CoupledLogger();
-        logger.initByName("fileName", stepDirName(chainNr) + File.separator + LIKELIHOOD_LOG_FILE,
+        logger.initByName("fileName", stepDirName(stepOf(chainNr)) + File.separator + LIKELIHOOD_LOG_FILE,
                 "log", ((HeatedChainLikelihoodOnly) chain).likelihood, "logEvery", logEvery);
         logger.setID(LIKELIHOOD_LOGGER_ID);
         chain.coupledLoggersInput.get().add(logger);
@@ -123,8 +128,17 @@ public class CoupledPathSampler extends CoupledMCMC {
     @Override
     public void run() throws IOException {
         checkOrWriteBetaSchedule();
+        runAllSteps();
+        closeLikelihoodLoggers();
+        analyse();
+    }
+
+    protected void runAllSteps() throws IOException {
         super.run();
-        // CoupledMCMC never closes its loggers; close the likelihood logs before reading them back
+    }
+
+    // CoupledMCMC never closes its loggers; close the likelihood logs before reading them back
+    protected void closeLikelihoodLoggers() {
         for (HeatedChain chain : chains) {
             for (CoupledLogger logger : chain.coupledLoggersInput.get()) {
                 if (LIKELIHOOD_LOGGER_ID.equals(logger.getID())) {
@@ -132,7 +146,6 @@ public class CoupledPathSampler extends CoupledMCMC {
                 }
             }
         }
-        analyse();
     }
 
     @Override

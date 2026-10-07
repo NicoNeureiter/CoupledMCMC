@@ -2,6 +2,7 @@
     <depends on='BEAST.base' atleast='2.8.0'/>
 
     <service type="beast.base.core.BEASTInterface">
+        <provider classname="coupledMCMC.BatchedCoupledPathSampler"/>
         <provider classname="coupledMCMC.CoupledLogger"/>
         <provider classname="coupledMCMC.CoupledMCMC"/>
         <provider classname="coupledMCMC.CoupledPathSampler"/>
