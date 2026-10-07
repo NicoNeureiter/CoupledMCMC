@@ -4,6 +4,7 @@
     <service type="beast.base.core.BEASTInterface">
         <provider classname="coupledMCMC.CoupledLogger"/>
         <provider classname="coupledMCMC.CoupledMCMC"/>
+        <provider classname="coupledMCMC.CoupledPathSampler"/>
         <provider classname="coupledMCMC.DummyLogger"/>
         <provider classname="coupledMCMC.HeatedChain"/>
         <provider classname="coupledMCMC.HeatedChainLikelihoodOnly"/>

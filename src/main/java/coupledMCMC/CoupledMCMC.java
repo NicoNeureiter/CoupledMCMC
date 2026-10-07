@@ -113,6 +113,9 @@ public class CoupledMCMC extends MCMC {
 		if (nrOfChainsInput.get() < 1) {
 			throw new RuntimeException("chains must be at least 1");
 		}
+		if (resampleEveryInput.get() <= 0) {
+			throw new IllegalArgumentException("resampleEvery must be positive");
+		}
 		if (nrOfChainsInput.get() == 1) {
 			Log.warning.println("Warning: coupled MCMC needs at least 2 chains, but the number of chains is 1. Running plain MCMC.");
 		}
@@ -234,6 +237,7 @@ public class CoupledMCMC extends MCMC {
 				// initialize each chain individually
 				chains[i].setResampleEvery(resampleEvery);
 				chains[i].setTemperature(i, getTemperature(i));
+				configureChain(chains[i], i);
 				
 				chains[i].setStateFile(chainStateFileName(i), restoreFromFile);
 				chains[i].setChainNr(i);
@@ -263,11 +267,19 @@ public class CoupledMCMC extends MCMC {
 		
 	}
 	
+	protected void configureChain(HeatedChain chain, int chainNr) {
+	}
+
 	// stateFileName already carries file.name.prefix, and HeatedChain.setStateFile does not add it again
 	protected String chainStateFileName(int i) {
 		return stateFileName.endsWith(".state")
 				? stateFileName.substring(0, stateFileName.length() - ".state".length()) + "." + i + "state"
 				: stateFileName + "." + i + "state";
+	}
+
+	// MCMC.chainLength is protected in another package, so the swap runners read it through here
+	long currentChainLength() {
+		return chainLength;
 	}
 
 	// Randomizer keeps one generator per thread name and never removes any, so a chain's
@@ -276,7 +288,7 @@ public class CoupledMCMC extends MCMC {
 		return "coupledMCMC.chain" + chainIndex;
 	}
 
-	private double getTemperature(int i){
+	protected double getTemperature(int i){
 		if (spacing==Spacing.Geometric) {
 			return i*deltaTemperature;
 		} else {
@@ -352,14 +364,16 @@ public class CoupledMCMC extends MCMC {
 		}
 
 		
+		runChains();
+	} // run
+
+	protected void runChains() {
 		if (neighbourSwappingInput.get()) {
 			runNeigbours();
-			return;
-		}else {
+		} else {
 			runPrescheduled();
-			return;
 		}
-	} // run
+	}
 	
 	private void runPrescheduled(){
 		// run each thread until it's next swapping time

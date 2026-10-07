@@ -49,6 +49,23 @@ with:
 * `deltaTemperature="0.025"` — temperature difference between chain *n* and chain *n-1*. Tune so that the swap acceptance probability is between 0.25 and 0.6.
 * `chains="2"` — number of parallel chains. The first (cold) chain explores the posterior; heated chains have higher acceptance probabilities and propose new states to the cold chain.
 
+## Coupled path sampling
+
+`CoupledPathSampler` estimates the marginal likelihood by path sampling / stepping stone (as `PathSampler` in the model-selection package), but runs the power-posterior steps as coupled chains, so that neighbouring steps can swap states. The posterior must be a `CompoundDistribution` with a distribution of id `likelihood`; everything else in it counts as prior.
+
+```xml
+<run id="mcmc" spec="coupledMCMC.CoupledPathSampler" chainLength="1000000" storeEvery="10000"
+     chains="16" alpha="0.3" rootdir="cps" burnInPercentage="50" resampleEvery="100">
+```
+
+* `chains` — number of steps. Step *k* samples prior × likelihood<sup>β<sub>k</sub></sup>, with β running from 1 (step 0) to 0 (the prior), spaced as quantiles of Beta(`alpha`, 1); `alpha="0"` gives uniform spacing.
+* `chainLength` — samples per step. All steps run at the same time, one thread each, so the run needs memory and cores for `chains` copies of the model.
+* `burnInPercentage` — discarded from each step's log. Steps start cold rather than from the previous step's state, so this has to cover burn-in.
+* `heatLikelihoodOnly` and `optimise` are fixed to `true` and `false`; `neighbourSwapping` defaults to `true`.
+* `evenOddSwaps` (default `true`) — every `resampleEvery` samples, attempt all even neighbour pairs (0,1),(2,3),… or all odd pairs (1,2),(3,4),…, alternating, instead of one random neighbour pair. States then cross the ladder in O(`chains`) rather than O(`chains`²) rounds (Syed et al. 2021).
+
+Each step's likelihood trace is written to `<rootdir>/step<k>/likelihood.log`, the same layout `PathSampler` uses, so `PathSampleAnalyser` can re-analyse it. At the end the per-step table and the line `marginal L estimate = ...` are printed (stepping stone; thermodynamic integration when `alpha <= 0`). Swaps correlate the steps, so standard errors computed as if the steps were independent are too small. See `examples/coupled_path_sampling.xml`.
+
 ## Citation
 
 Müller NF, Bouckaert RR. Adaptive Metropolis-coupled MCMC for BEAST 2. PeerJ. 2020 Sep 16;8:e9473. [DOI:10.7717/peerj.9473](https://doi.org/10.7717/peerj.9473)
