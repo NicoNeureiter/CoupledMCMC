@@ -267,6 +267,12 @@ public class CoupledMCMC extends MCMC {
 		
 	}
 	
+	// Randomizer keeps one generator per thread name and never removes any, so a chain's
+	// threads must reuse one name rather than get a fresh "Thread-N" every round
+	static String chainThreadName(int chainIndex) {
+		return "coupledMCMC.chain" + chainIndex;
+	}
+
 	private double getTemperature(int i){
 		if (spacing==Spacing.Geometric) {
 			return i*deltaTemperature;
@@ -290,6 +296,7 @@ public class CoupledMCMC extends MCMC {
 		long runUntil;
 
 		HeatedChainThread(int chainNr, long runUntil) {
+			super(chainThreadName(chainNr));
 			this.chainNr = chainNr;
 			this.runUntil = runUntil;
 		}		
